@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>TERYT Searcher</title>
+
+    <style>
+        body {
+            font-family: Arial, monospace;
+        }
+
+        div {
+            margin: 50px 10px 10px;
+        }
+
+        input {
+            display: block;
+            margin: 10px;
+        }
+
+        ul li {
+            margin: 15px;
+        }
+
+        ul li:hover {
+            background-color: aqua;
+        }
+
+        ul li span.name {
+            font-weight: bold;
+            font-size: large;
+            display: inline-block;
+            margin: 3px;
+        }
+
+        ul li span.extraName {
+            margin: 2px;
+            display: inline-block;
+            font-size: small;
+            color: gray;
+            font-style: italic;
+        }
+
+        ul li span.community::before {
+            content: 'gmina:';
+            margin-left: 30px;
+            margin-right: 5px;
+            font-size: small;
+            color: gray;
+            font-style: italic;
+        }
+
+        ul li span.community {
+            display: block;
+        }
+
+        ul li span.county::before {
+            content: 'powiat:';
+            margin-left: 30px;
+            margin-right: 5px;
+            font-size: small;
+            color: gray;
+            font-style: italic;
+        }
+
+        ul li span.county {
+            display: block;
+        }
+
+        ul li span.voivodeship::before {
+            content: 'województwo:';
+            margin-left: 30px;
+            margin-right: 5px;
+            font-size: small;
+            color: gray;
+            font-style: italic;
+        }
+
+        ul li span.voivodeship {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+<div id="searcher">
+    <label for="search-input">search string</label>
+    <input type="text" name="search string" id="search-input" oninput="search(this.value)"
+           onemptied="clearResult()"/>
+</div>
+
+<div id="result"></div>
+
+<div id="form">
+    <form name="address" id="address-form">
+
+        <input type="hidden" id="id">
+
+        <label content="województwo" for="voivodeship">województwo</label>
+        <input id="voivodeship" type="text" readonly>
+
+        <label content="powiat" for="county">powiat</label>
+        <input id="county" type="text" readonly>
+
+        <label content="gmina" for="community">gmina</label>
+        <input id="community" type="text" readonly>
+
+        <label content="nazwa" for="name">nazwa</label>
+        <input id="name" type="text" readonly>
+
+        <label content="rodzaj" for="extraName">rodzaj</label>
+        <input id="extraName" type="text" readonly>
+
+        <input id="submit" type="button" onclick="send()" value="wyślij"/>
+    </form>
+</div>
+
+<script>
+
+    function send() {
+        console.log(document.getElementById('address-form'))
+    }
+
+    function clearResult() {
+        document.getElementById("result").innerText = "";
+
+    }
+
+    function search(e) {
+
+        clearResult()
+        if (e.length < 2) {
+            return
+        }
+
+        fetch("http://localhost:8000/api/teryt?" + e)
+            .then((response) => response.json())
+            .then(j => fillHtml(j))
+    }
+
+    function fillHtml(json) {
+        let result = document.getElementById("result")
+
+        let list = document.createElement("ul")
+        result.appendChild(list)
+
+        list.innerText = ''
+
+        console.log(json)
+
+        for (let i = 0; i < json.length; i++) {
+            appendResult(json[i], list)
+        }
+
+
+    }
+
+    function appendResult(elem, list) {
+        let item = document.createElement("li")
+
+        item.id = elem.id
+        item.onclick = fillForm
+
+        appendSpan('name', elem['name'])
+        appendSpan('extraName', elem['extraName'])
+        appendSpan('community', elem['community'])
+        appendSpan('county', elem['county'])
+        appendSpan('voivodeship', elem['voivodeship'])
+
+        function appendSpan(className, value) {
+            let name = document.createElement("span")
+            name.className = className
+            name.innerText = value
+            item.appendChild(name)
+            list.appendChild(item)
+        }
+
+        function fillForm(event) {
+            clearResult()
+            let element = event['path'][1]
+
+            function fillInput(name) {
+                document.getElementById(name).value = element.getElementsByClassName(name)[0].innerText
+            }
+
+            function fillInputWith(name, value) {
+                document.getElementById(name).value = value
+            }
+
+
+            console.log(element.getAttribute('id'))
+            fillInputWith('id', element.getAttribute('id'))
+            fillInput('voivodeship');
+            fillInput('county');
+            fillInput('community');
+            fillInput('extraName');
+            fillInput('name')
+
+        }
+
+    }
+</script>
+</body>
+</html>
