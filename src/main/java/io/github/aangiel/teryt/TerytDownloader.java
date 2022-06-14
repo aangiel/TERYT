@@ -15,9 +15,11 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.search.IndexDefinition;
 import redis.clients.jedis.search.IndexOptions;
 import redis.clients.jedis.search.Schema;
+import redis.clients.jedis.util.SafeEncoder;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -187,12 +189,16 @@ public class TerytDownloader {
             community = community == null ? "" : community;
 
             return ImmutableMap.of(
-                    "voivodeship", voivodeship.toLowerCase(),
-                    "county", county,
-                    "name", this.name,
-                    "extraName", this.extraName,
-                    "community", community
+                    "voivodeship", encode(voivodeship.toLowerCase()),
+                    "county", encode(county),
+                    "name", encode(this.name),
+                    "extraName", encode(this.extraName),
+                    "community", encode(community)
             );
+        }
+
+        private String encode(String toEncode) {
+            return SafeEncoder.encode(toEncode.getBytes(StandardCharsets.UTF_8));
         }
 
 

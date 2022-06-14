@@ -8,8 +8,10 @@ import lombok.Getter;
 import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.search.Query;
 import redis.clients.jedis.search.SearchResult;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -21,7 +23,10 @@ public class TerytSearcher {
         SearchResult sr;
         try (JedisPooled client = new JedisPooled()) {
 
-            Query q = new Query("%" + searchString + "%")
+            var encodedSearchString = SafeEncoder
+                    .encode(("*" + searchString + "*").getBytes(StandardCharsets.UTF_8));
+
+            Query q = new Query(encodedSearchString)
                     .limit(0, 10);
 
             sr = client.ftSearch("idx:terc:2022-01-01:name", q);
