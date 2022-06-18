@@ -41,7 +41,7 @@ class TerytDownloaderTest {
         var result = new ObjectMapper().writerWithDefaultPrettyPrinter()
                 .writeValueAsString(downloadedRoot);
 
-        Files.writeString(Path.of("target", "tmp", "terytTreeResult.json"), result);
+        Files.writeString(Path.of("target", "tmp", "expectedTerytTreeResult.json"), result);
 
         var expected = FileUtils.readFileToString(Path.of("src", "test", "resources", "expectedTerytTreeResult.json").toFile());
 

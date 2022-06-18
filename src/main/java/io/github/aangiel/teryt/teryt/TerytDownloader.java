@@ -24,10 +24,6 @@ public class TerytDownloader {
     private static final ITerytWs1 terytClient = TerytClient.create(Constants.TERYT_USER, Constants.TERYT_PASS);
 
 
-//    public TerytNode getDownloadedRoot() {
-//        return downloadedRoot;
-//    }
-
     public TerytNode downloadData() throws IOException, CsvException {
 
         var root = TerytNode.createRoot();
@@ -41,7 +37,7 @@ public class TerytDownloader {
 
     private void downloadDictionaries(TerytNode root, TerytNode dates) {
 
-        var dictionaries = root.addOrGetChild("dictionaries");
+        var dictionaries = root.addChild(TerytNode.builder().code("dictionaries"));
 
         downloadUnitTypeDictionary(dictionaries);
         downloadSimcTypeDictionary(dictionaries, dates);
@@ -49,7 +45,8 @@ public class TerytDownloader {
     }
 
     private void downloadStreetPropertiesDictionary(TerytNode dictionaries) {
-        var dictionary = dictionaries.addOrGetChild("streetProperties");
+
+        var dictionary = dictionaries.addChild(TerytNode.builder().code("streetProperties"));
 
         var entries = terytClient.pobierzSlownikCechULIC()
                 .getString()
@@ -58,15 +55,16 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addOrGetChild(entry[0], entry[1]);
+            dictionary.addChild(TerytNode.builder().name(entry[0]).code(entry[1]));
         }
 
     }
 
     private void downloadSimcTypeDictionary(TerytNode dictionaries, TerytNode dates) {
-        var dictionary = dictionaries.addOrGetChild("simcType");
+        var dictionaryBuilder = TerytNode.builder().code("simcType");
+        var dictionary = dictionaries.addChild(dictionaryBuilder);
 
-        var date = dates.addOrGetChild("simc");
+        var date = dates.getChildByCode("simc");
 
         var entries = terytClient.pobierzSlownikRodzajowSIMC(date.getDate())
                 .getRodzajMiejscowosci()
@@ -74,15 +72,18 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addOrGetChild(entry.getNazwa().getValue(),
-                    entry.getSymbol().getValue(),
-                    entry.getOpis().getValue());
+            var child = TerytNode.builder()
+                    .name(entry.getNazwa().getValue())
+                    .code(entry.getSymbol().getValue())
+                    .description(entry.getOpis().getValue());
+
+            dictionary.addChild(child);
         }
     }
 
     private void downloadUnitTypeDictionary(TerytNode dictionaries) {
 
-        var dictionary = dictionaries.addOrGetChild("unitType");
+        var dictionary = dictionaries.addChild(TerytNode.builder().code("unitType"));
 
         List<String[]> entries = terytClient.pobierzSlownikRodzajowJednostek()
                 .getString()
@@ -91,34 +92,35 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addOrGetChild(entry[1], entry[0]);
+            dictionary.addChild(TerytNode.builder().name(entry[1]).code(entry[0]));
         }
     }
 
     private TerytNode downloadDates(TerytNode root) {
 
-        var dates = root.addOrGetChild("dates");
+        var dates = root.addChild(TerytNode.builder().code("dates"));
 
-        dates.addOrGetChild("terc", terytClient.pobierzDateAktualnegoKatTerc());
-        dates.addOrGetChild("nts", terytClient.pobierzDateAktualnegoKatNTS());
-        dates.addOrGetChild("simc", terytClient.pobierzDateAktualnegoKatSimc());
-        dates.addOrGetChild("ulic", terytClient.pobierzDateAktualnegoKatUlic());
+        dates.addChild(TerytNode.builder().code("terc").date(terytClient.pobierzDateAktualnegoKatTerc()));
+        dates.addChild(TerytNode.builder().code("nts").date(terytClient.pobierzDateAktualnegoKatNTS()));
+        dates.addChild(TerytNode.builder().code("simc").date(terytClient.pobierzDateAktualnegoKatSimc()));
+        dates.addChild(TerytNode.builder().code("ulic").date(terytClient.pobierzDateAktualnegoKatUlic()));
 
         return dates;
     }
 
-    private void downloadCatalogs(TerytNode root, TerytNode dates) throws IOException, CsvException {
+    private void downloadCatalogs(TerytNode root, TerytNode dates) throws IOException {
 
-        var catalogs = root.addOrGetChild("catalogs");
-
-
-        var tercDate = dates.addOrGetChild("terc").getDate();
-        var ntsDate = dates.addOrGetChild("nts").getDate();
-        var simcDate = dates.addOrGetChild("simc").getDate();
-        var ulicDate = dates.addOrGetChild("ulic").getDate();
+        var catalogs = root.addChild(TerytNode.builder().code("catalogs"));
 
 
-        downloadTercCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
+        var tercDate = dates.getChildByCode("terc").getDate();
+        var ntsDate = dates.getChildByCode("nts").getDate();
+        var simcDate = dates.getChildByCode("simc").getDate();
+        var ulicDate = dates.getChildByCode("ulic").getDate();
+
+
+        var tercCatalogFile = terytClient.pobierzKatalogTERCAdr(tercDate);
+        downloadTercCatalog(catalogs, tercCatalogFile , "terc-address");
 
 //        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
 //        this.downloadedCatalogs.putAll(tercCatalog);
@@ -158,17 +160,14 @@ public class TerytDownloader {
     }
 
 
-    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException, CsvException {
+    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
 
 
-        var catalog = catalogs.addOrGetChild(catalogName);
+        var catalog = catalogs.addChild(TerytNode.builder().code(catalogName));
         var lines = getCsvLines(catalogFile);
 
-        TerytNode currentVoivodeship = null;
-        TerytNode currentCounty = null;
-        TerytNode currentTown = null;
-
         for (var line : lines) {
+
 
             var voivodeship = line[0];
             var county = line[1];
@@ -178,23 +177,28 @@ public class TerytDownloader {
             var extraName = line[5];
             var stateDate = line[6];
 
-            var date = catalog.addOrGetChild(stateDate);
+            var stateDateNode = catalog.getChildByCode(stateDate);
+            if (stateDateNode == null) {
+                stateDateNode = catalog.addChild(TerytNode.builder().code(stateDate));
 
-
-            if ("województwo".equals(extraName)) {
-                currentVoivodeship = date.addOrGetChild(name, voivodeship);
-            } else if ("powiat".equals(extraName)) {
-                assert currentVoivodeship != null;
-                currentCounty = currentVoivodeship.addOrGetChild(name, county);
-            } else {
-                assert currentVoivodeship != null;
-                assert currentCounty != null;
-                currentCounty.addOrGetChild(name, community)
-                        .addOrGetChild(extraName, type);
             }
 
-        }
+            var voivodeshipNode = stateDateNode.getChildByCode(voivodeship);
+            if (voivodeshipNode == null) {
+                stateDateNode.addChild(TerytNode.builder().code(voivodeship).name(name).extraName(extraName));
+                continue;
+            }
 
+            var countyNode = voivodeshipNode.getChildByCode(county);
+            if (countyNode == null) {
+                voivodeshipNode.addChild(TerytNode.builder().code(county).name(name).extraName(extraName));
+                continue;
+            }
+
+            countyNode.addChild(TerytNode.builder().code(community).name(name))
+                    .addChild(TerytNode.builder().code(type).name(extraName));
+
+        }
 
 
     }

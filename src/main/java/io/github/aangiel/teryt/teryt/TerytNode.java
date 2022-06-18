@@ -7,15 +7,13 @@ import lombok.*;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 @RequiredArgsConstructor(staticName = "create", access = AccessLevel.PRIVATE)
 @ToString(exclude = "parent")
-@EqualsAndHashCode(of = {"code", "name", "description"})
-@Getter
+@EqualsAndHashCode(exclude = {"parent", "children"})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Getter
 public class TerytNode implements Serializable {
 
     @JsonIgnore
@@ -23,57 +21,79 @@ public class TerytNode implements Serializable {
     private final String name;
     private final String code;
     private final String description;
+    private final String extraName;
     private final XMLGregorianCalendar date;
 
-//    @JsonIgnore
-//    private final ImmutableSet.Builder<TerytNode> children = ImmutableSet.builder();
-
-    private final Set<TerytNode> children = new TreeSet<>(Comparator.comparing(child -> child.name));
+    private final TreeMap<String, TerytNode> children = new TreeMap<>(Comparator.naturalOrder());
 
     static TerytNode createRoot() {
-        return create(null, "", "root", "", null);
+        return TerytNode.builder()
+                .code("00")
+                .name("root").build();
     }
 
-    TerytNode addOrGetChild(String name) {
-        return addOrGetChild(name, "");
+    public static TerytNodeBuilder builder() {
+        return new TerytNodeBuilder();
     }
 
-    TerytNode addOrGetChild(XMLGregorianCalendar date) {
-        return addOrGetChild("", "", "", date);
+    TerytNode addChild(TerytNodeBuilder childBuilder) {
+        var child = childBuilder.parent(this).build();
+        children.put(child.code, child);
+        return child;
     }
 
-    TerytNode addOrGetChild(String name, XMLGregorianCalendar date) {
-        return addOrGetChild(name, "", "", date);
+    TerytNode getChildByCode(String code) {
+        return children.get(code);
     }
 
-    TerytNode addOrGetChild(String name, String code) {
-        return addOrGetChild(name, code, "");
-    }
 
-    TerytNode addOrGetChild(String name, String code, String description) {
-        return addOrGetChild(name, code, description, null);
-    }
+    public static class TerytNodeBuilder {
+        private TerytNode parent;
+        private String name;
+        private String code;
+        private String description;
+        private String extraName;
+        private XMLGregorianCalendar date;
 
-    TerytNode addOrGetChild(String name, String code, String description, XMLGregorianCalendar date) {
-        var child = getChild(name);
-        if (child.isPresent()) {
-            return child.get();
+        TerytNodeBuilder() {
         }
-        var newNode = create(this, name, code, description, date);
-        children.add(newNode);
-        return newNode;
-    }
 
-    private Optional<TerytNode> getChild(String name) {
-        for (var child : children) {
-            if (name.equals(child.name))
-                return Optional.of(child);
+        private TerytNodeBuilder parent(TerytNode parent) {
+            this.parent = parent;
+            return this;
         }
-        return Optional.empty();
-    }
 
-//    @JsonProperty
-//    Set<TerytNode> getChildren() {
-//        return children.build();
-//    }
+        public TerytNodeBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public TerytNodeBuilder code(String code) {
+            this.code = code;
+            return this;
+        }
+
+        public TerytNodeBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public TerytNodeBuilder extraName(String extraName) {
+            this.extraName = extraName;
+            return this;
+        }
+
+        public TerytNodeBuilder date(XMLGregorianCalendar date) {
+            this.date = date;
+            return this;
+        }
+
+        public TerytNode build() {
+            return new TerytNode(parent, name, code, description, extraName, date);
+        }
+
+        public String toString() {
+            return "TerytNode.TerytNodeBuilder(parent=" + this.parent + ", name=" + this.name + ", code=" + this.code + ", description=" + this.description + ", date=" + this.date + ")";
+        }
+    }
 }
