@@ -189,8 +189,8 @@ public class TerytDownloader {
             } else {
                 assert currentVoivodeship != null;
                 assert currentCounty != null;
-                currentTown = currentCounty.addOrGetChild(name, community);
-                currentTown.addOrGetChild(extraName, type);
+                currentCounty.addOrGetChild(name, community)
+                        .addOrGetChild(extraName, type);
             }
 
         }
