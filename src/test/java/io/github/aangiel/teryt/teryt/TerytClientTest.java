@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.download;
+package io.github.aangiel.teryt.teryt;
 
 import com.sun.xml.ws.fault.ServerSOAPFaultException;
 import org.junit.jupiter.api.Test;

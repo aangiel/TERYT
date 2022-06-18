@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.download;
+package io.github.aangiel.teryt.teryt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -37,10 +37,10 @@ class TerytDownloaderTest {
         downloader.downloadData();
         var downloaded = downloader.getDownloadedCatalogs();
 
-        var pretty = new ObjectMapper()//.writerWithDefaultPrettyPrinter()
+        var pretty = new ObjectMapper().writerWithDefaultPrettyPrinter()
                 .writeValueAsString(downloaded);
 
-        Files.writeString(Path.of("src", "test", "resources", "mapResultUTF.json"), pretty);
+        Files.writeString(Path.of("target", "tmp", "mapResultUTF.json"), pretty);
 
         fail();
     }

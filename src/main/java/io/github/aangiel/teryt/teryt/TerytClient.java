@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.download;
+package io.github.aangiel.teryt.teryt;
 
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import io.github.aangiel.teryt.ws.TerytWs1;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TerytClient {
+class TerytClient {
 
 
     protected TerytClient() {

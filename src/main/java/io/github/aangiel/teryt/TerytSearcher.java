@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class TerytSearcher {
+final class TerytSearcher {
 
     public static String search(String searchString) throws JsonProcessingException {
 

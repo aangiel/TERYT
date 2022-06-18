@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.model;
+package io.github.aangiel.teryt.teryt;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
@@ -15,7 +15,7 @@ public final class CsvLine {
 
     private final Map<String, String> properties;
 
-    private CsvLine(String catalogName, String line, String[] headers) {
+    public CsvLine(String catalogName, String line, String[] headers) {
 
 
         line = new String(line.getBytes(StandardCharsets.UTF_8));

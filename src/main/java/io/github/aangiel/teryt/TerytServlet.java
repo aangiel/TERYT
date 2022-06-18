@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 
-public class TerytServlet {
+final class TerytServlet {
 
     public static void main(String[] args) throws IOException {
         int serverPort = 8000;

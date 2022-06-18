@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.model;
+package io.github.aangiel.teryt.teryt;
 
 import io.github.aangiel.teryt.ws.RodzajMiejscowosci;
 import lombok.AccessLevel;

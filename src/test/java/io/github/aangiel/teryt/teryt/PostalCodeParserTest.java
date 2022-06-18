@@ -1,4 +1,4 @@
-package io.github.aangiel.teryt.download;
+package io.github.aangiel.teryt.teryt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.aangiel.teryt.postal.PostalCodeParser;

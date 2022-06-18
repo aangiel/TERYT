@@ -1,9 +1,7 @@
-package io.github.aangiel.teryt.download;
+package io.github.aangiel.teryt.teryt;
 
 import com.google.common.collect.ImmutableMap;
 import io.github.aangiel.teryt.Constants;
-import io.github.aangiel.teryt.model.CsvLine;
-import io.github.aangiel.teryt.model.SIMCTypeDictionary;
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import io.github.aangiel.teryt.ws.PlikKatalog;
 import lombok.Getter;
@@ -35,9 +33,9 @@ public class TerytDownloader {
     private List<SIMCTypeDictionary> downloadSimcTypeDictionary;
     private Map<String, String> streetPropertiesDictionary;
 
-    private final ImmutableMap.Builder<String, CsvLine> downloadedCatalogs = ImmutableMap.builder();
+    private final ImmutableMap.Builder<String, Map<String, String>> downloadedCatalogs = ImmutableMap.builder();
 
-    public Map<String, CsvLine> getDownloadedCatalogs() {
+    public Map<String, Map<String, String>> getDownloadedCatalogs() {
         return downloadedCatalogs.build();
     }
 
@@ -148,7 +146,7 @@ public class TerytDownloader {
     }
 
 
-    private Map<String, CsvLine> download(PlikKatalog catalogFile, String catalogName) throws IOException {
+    private Map<String, Map<String, String>> download(PlikKatalog catalogFile, String catalogName) throws IOException {
 
 
 //        PlikKatalog tercAdrFile = terytClient.pobierzKatalogTERCAdr(dates.get(Constants.TERYT_CATALOG_TERC));
@@ -164,7 +162,13 @@ public class TerytDownloader {
 
         var csvPath = Path.of(csvTempDirectory.toString(), fileName);
         log.debug(csvPath);
-        return convertLines(csvPath, catalogName);
+        var convertedLines = convertLines(csvPath, catalogName);
+
+        return convertedLines.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        v -> v.getValue().getProperties()
+                ));
     }
 
 
