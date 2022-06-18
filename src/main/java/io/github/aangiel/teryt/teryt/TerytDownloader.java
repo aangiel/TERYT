@@ -1,60 +1,55 @@
 package io.github.aangiel.teryt.teryt;
 
-import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import io.github.aangiel.teryt.Constants;
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import io.github.aangiel.teryt.ws.PlikKatalog;
-import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.lingala.zip4j.ZipFile;
 
-import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Predicate;
 
 @Log4j
-@Getter
 public class TerytDownloader {
 
     private static final ITerytWs1 terytClient = TerytClient.create(Constants.TERYT_USER, Constants.TERYT_PASS);
 
-    private Map<String, XMLGregorianCalendar> dates;
-    private Map<String, String> unitTypeDictionary;
-    private List<SIMCTypeDictionary> downloadSimcTypeDictionary;
-    private Map<String, String> streetPropertiesDictionary;
 
-    private final TerytNode downloadedRoot = TerytNode.createRoot();
+//    public TerytNode getDownloadedRoot() {
+//        return downloadedRoot;
+//    }
 
-    public TerytNode getDownloadedRoot() {
-        return downloadedRoot;
-    }
+    public TerytNode downloadData() throws IOException, CsvException {
 
-    public void downloadData() throws IOException, CsvException {
+        var root = TerytNode.createRoot();
+        var dates = downloadDates(root);
+        downloadDictionaries(root, dates);
+        downloadCatalogs(root, dates);
 
-        downloadDates();
-
-        downloadDictionaries();
-
-//        downloadCatalogs();
+        return root;
     }
 
 
-    private void downloadDictionaries() {
+    private void downloadDictionaries(TerytNode root, TerytNode dates) {
 
-        var dictionaries = getDownloadedRoot().addChild("dictionaries");
+        var dictionaries = root.addOrGetChild("dictionaries");
 
         downloadUnitTypeDictionary(dictionaries);
-        downloadSimcTypeDictionary(dictionaries);
+        downloadSimcTypeDictionary(dictionaries, dates);
         downloadStreetPropertiesDictionary(dictionaries);
     }
 
     private void downloadStreetPropertiesDictionary(TerytNode dictionaries) {
-        var dictionary = dictionaries.addChild("streetProperties");
+        var dictionary = dictionaries.addOrGetChild("streetProperties");
 
         var entries = terytClient.pobierzSlownikCechULIC()
                 .getString()
@@ -63,19 +58,15 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addChild(entry[0], entry[1]);
+            dictionary.addOrGetChild(entry[0], entry[1]);
         }
 
     }
 
-    private void downloadSimcTypeDictionary(TerytNode dictionaries) {
-        var dictionary = dictionaries.addChild("simcType");
+    private void downloadSimcTypeDictionary(TerytNode dictionaries, TerytNode dates) {
+        var dictionary = dictionaries.addOrGetChild("simcType");
 
-
-
-        var dates = getDownloadedRoot().getChild("dates").orElseThrow();
-        var date = dates.getChild("simc").orElseThrow();
-
+        var date = dates.addOrGetChild("simc");
 
         var entries = terytClient.pobierzSlownikRodzajowSIMC(date.getDate())
                 .getRodzajMiejscowosci()
@@ -83,7 +74,7 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addChild(entry.getNazwa().getValue(),
+            dictionary.addOrGetChild(entry.getNazwa().getValue(),
                     entry.getSymbol().getValue(),
                     entry.getOpis().getValue());
         }
@@ -91,7 +82,7 @@ public class TerytDownloader {
 
     private void downloadUnitTypeDictionary(TerytNode dictionaries) {
 
-        var dictionary = dictionaries.addChild("unitType");
+        var dictionary = dictionaries.addOrGetChild("unitType");
 
         List<String[]> entries = terytClient.pobierzSlownikRodzajowJednostek()
                 .getString()
@@ -100,73 +91,115 @@ public class TerytDownloader {
                 .toList();
 
         for (var entry : entries) {
-            dictionary.addChild(entry[1], entry[0]);
+            dictionary.addOrGetChild(entry[1], entry[0]);
         }
     }
 
-    private void downloadDates() {
+    private TerytNode downloadDates(TerytNode root) {
 
-        var dates = this.downloadedRoot.addChild("dates");
+        var dates = root.addOrGetChild("dates");
 
-//        var terc = dates.addChild(Constants.TERYT_CATALOG_TERC);
-//        var nts = dates.addChild(Constants.TERYT_CATALOG_NTS);
-//        var simc = dates.addChild(Constants.TERYT_CATALOG_SIMC);
-//        var ulic = dates.addChild(Constants.TERYT_CATALOG_ULIC);
+        dates.addOrGetChild("terc", terytClient.pobierzDateAktualnegoKatTerc());
+        dates.addOrGetChild("nts", terytClient.pobierzDateAktualnegoKatNTS());
+        dates.addOrGetChild("simc", terytClient.pobierzDateAktualnegoKatSimc());
+        dates.addOrGetChild("ulic", terytClient.pobierzDateAktualnegoKatUlic());
 
-        dates.addChild("terc", terytClient.pobierzDateAktualnegoKatTerc());
-        dates.addChild("nts", terytClient.pobierzDateAktualnegoKatNTS());
-        dates.addChild("simc", terytClient.pobierzDateAktualnegoKatSimc());
-        dates.addChild("ulic", terytClient.pobierzDateAktualnegoKatUlic());
+        return dates;
     }
 
-    private void downloadCatalogs() throws IOException, CsvException {
-        var tercAddressesCatalog = download(terytClient.pobierzKatalogTERCAdr(dates.get(Constants.TERYT_CATALOG_TERC)), "terc-address");
-//        this.downloadedCatalogs.putAll(tercAddressesCatalog);
-        log.trace(tercAddressesCatalog);
+    private void downloadCatalogs(TerytNode root, TerytNode dates) throws IOException, CsvException {
 
-        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
+        var catalogs = root.addOrGetChild("catalogs");
+
+
+        var tercDate = dates.addOrGetChild("terc").getDate();
+        var ntsDate = dates.addOrGetChild("nts").getDate();
+        var simcDate = dates.addOrGetChild("simc").getDate();
+        var ulicDate = dates.addOrGetChild("ulic").getDate();
+
+
+        downloadTercCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
+
+//        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
 //        this.downloadedCatalogs.putAll(tercCatalog);
-        log.trace(tercCatalog);
-
-        var ntsCatalog = download(terytClient.pobierzKatalogNTS(dates.get(Constants.TERYT_CATALOG_NTS)), "nts");
+//        log.trace(tercCatalog);
+//
+//        var ntsCatalog = download(terytClient.pobierzKatalogNTS(dates.get(Constants.TERYT_CATALOG_NTS)), "nts");
 //        this.downloadedCatalogs.putAll(ntsCatalog);
-        log.trace(ntsCatalog);
-
-        var simcAddressesCatalog = download(terytClient.pobierzKatalogSIMCAdr(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-address");
+//        log.trace(ntsCatalog);
+//
+//        var simcAddressesCatalog = download(terytClient.pobierzKatalogSIMCAdr(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-address");
 //        this.downloadedCatalogs.putAll(simcAddressesCatalog);
-        log.trace(simcAddressesCatalog);
-
-        var simcCatalog = download(terytClient.pobierzKatalogSIMC(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc");
+//        log.trace(simcAddressesCatalog);
+//
+//        var simcCatalog = download(terytClient.pobierzKatalogSIMC(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc");
 //        this.downloadedCatalogs.putAll(simcCatalog);
-        log.trace(simcCatalog);
-
-        var simcStatCatalog = download(terytClient.pobierzKatalogSIMCStat(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-stat");
+//        log.trace(simcCatalog);
+//
+//        var simcStatCatalog = download(terytClient.pobierzKatalogSIMCStat(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-stat");
 //        this.downloadedCatalogs.putAll(simcStatCatalog);
-        log.trace(simcStatCatalog);
-
-        var ulicCatalog = download(terytClient.pobierzKatalogULIC(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic");
+//        log.trace(simcStatCatalog);
+//
+//        var ulicCatalog = download(terytClient.pobierzKatalogULIC(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic");
 //        this.downloadedCatalogs.putAll(ulicCatalog);
-        log.trace(ulicCatalog);
-
-        var ulicAddressesCatalog = download(terytClient.pobierzKatalogULICAdr(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-address");
+//        log.trace(ulicCatalog);
+//
+//        var ulicAddressesCatalog = download(terytClient.pobierzKatalogULICAdr(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-address");
 //        this.downloadedCatalogs.putAll(ulicAddressesCatalog);
-        log.trace(ulicAddressesCatalog);
-
-        var ulicWithoutDistrictsCatalog = download(terytClient.pobierzKatalogULICBezDzielnic(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-without-district");
+//        log.trace(ulicAddressesCatalog);
+//
+//        var ulicWithoutDistrictsCatalog = download(terytClient.pobierzKatalogULICBezDzielnic(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-without-district");
 //        this.downloadedCatalogs.putAll(ulicWithoutDistrictsCatalog);
-        log.trace(ulicWithoutDistrictsCatalog);
-
-        var townTypeCatalog = download(terytClient.pobierzKatalogWMRODZ(dates.get(Constants.TERYT_CATALOG_SIMC)), "type");
+//        log.trace(ulicWithoutDistrictsCatalog);
+//
+//        var townTypeCatalog = download(terytClient.pobierzKatalogWMRODZ(dates.get(Constants.TERYT_CATALOG_SIMC)), "type");
 //        this.downloadedCatalogs.putAll(townTypeCatalog);
-        log.trace(townTypeCatalog);
+//        log.trace(townTypeCatalog);
     }
 
 
-    private Map<String, String[]> download(PlikKatalog catalogFile, String catalogName) throws IOException, CsvException {
+    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException, CsvException {
 
 
-//        PlikKatalog tercAdrFile = terytClient.pobierzKatalogTERCAdr(dates.get(Constants.TERYT_CATALOG_TERC));
+        var catalog = catalogs.addOrGetChild(catalogName);
+        var lines = getCsvLines(catalogFile);
 
+        TerytNode currentVoivodeship = null;
+        TerytNode currentCounty = null;
+        TerytNode currentTown = null;
+
+        for (var line : lines) {
+
+            var voivodeship = line[0];
+            var county = line[1];
+            var community = line[2];
+            var type = line[3];
+            var name = line[4];
+            var extraName = line[5];
+            var stateDate = line[6];
+
+            var date = catalog.addOrGetChild(stateDate);
+
+
+            if ("województwo".equals(extraName)) {
+                currentVoivodeship = date.addOrGetChild(name, voivodeship);
+            } else if ("powiat".equals(extraName)) {
+                assert currentVoivodeship != null;
+                currentCounty = currentVoivodeship.addOrGetChild(name, county);
+            } else {
+                assert currentVoivodeship != null;
+                assert currentCounty != null;
+                currentTown = currentCounty.addOrGetChild(name, community);
+                currentTown.addOrGetChild(extraName, type);
+            }
+
+        }
+
+
+
+    }
+
+    private List<String[]> getCsvLines(PlikKatalog catalogFile) throws IOException {
         var base64Value = catalogFile.getPlikZawartosc().getValue();
         var data = Base64.getDecoder().decode(base64Value);
         var zipTempFile = File.createTempFile("temp-", ".zip");
@@ -177,15 +210,13 @@ public class TerytDownloader {
         extractZipFile(zipTempFile, fileName, csvTempDirectory);
 
         var csvPath = Path.of(csvTempDirectory.toString(), fileName);
-        log.debug(csvPath);
 
-        var reader = new InputStreamReader(new FileInputStream(csvPath.toFile()));
-        var csvReader = new CSVReader(reader);
-        var readFile = csvReader.readAll();
-
-        return null;
-//        return ImmutableMap.of(catalogName, readFile);
-//        return
+        try (var lines = Files.lines(csvPath, StandardCharsets.UTF_8)) {
+            return lines.skip(1)
+                    .filter(Predicate.not(String::isEmpty))
+                    .map(l -> l.split("\s*;\s*"))
+                    .toList();
+        }
     }
 
 

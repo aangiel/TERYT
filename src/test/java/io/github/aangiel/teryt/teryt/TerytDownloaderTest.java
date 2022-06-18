@@ -36,8 +36,7 @@ class TerytDownloaderTest {
     @Test
     void downloadData() throws IOException, CsvException {
         var downloader = new TerytDownloader();
-        downloader.downloadData();
-        var downloadedRoot = downloader.getDownloadedRoot();
+        var downloadedRoot = downloader.downloadData();
 
         var result = new ObjectMapper().writerWithDefaultPrettyPrinter()
                 .writeValueAsString(downloadedRoot);

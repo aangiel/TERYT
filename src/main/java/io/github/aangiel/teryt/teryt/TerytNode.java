@@ -32,33 +32,37 @@ public class TerytNode implements Serializable {
         return create(null, "", "root", "", null);
     }
 
-    TerytNode addChild(String name) {
-        return addChild(name, "");
+    TerytNode addOrGetChild(String name) {
+        return addOrGetChild(name, "");
     }
 
-    TerytNode addChild(XMLGregorianCalendar date) {
-        return addChild("", "", "", date);
+    TerytNode addOrGetChild(XMLGregorianCalendar date) {
+        return addOrGetChild("", "", "", date);
     }
 
-    TerytNode addChild(String name, XMLGregorianCalendar date) {
-        return addChild(name, "", "", date);
+    TerytNode addOrGetChild(String name, XMLGregorianCalendar date) {
+        return addOrGetChild(name, "", "", date);
     }
 
-    TerytNode addChild(String name, String code) {
-        return addChild(name, code, "");
+    TerytNode addOrGetChild(String name, String code) {
+        return addOrGetChild(name, code, "");
     }
 
-    TerytNode addChild(String name, String code, String description) {
-        return addChild(name, code, description, null);
+    TerytNode addOrGetChild(String name, String code, String description) {
+        return addOrGetChild(name, code, description, null);
     }
 
-    TerytNode addChild(String name, String code, String description, XMLGregorianCalendar date) {
+    TerytNode addOrGetChild(String name, String code, String description, XMLGregorianCalendar date) {
+        var child = getChild(name);
+        if (child.isPresent()) {
+            return child.get();
+        }
         var newNode = create(this, name, code, description, date);
         children.add(newNode);
         return newNode;
     }
 
-    Optional<TerytNode> getChild(String name) {
+    private Optional<TerytNode> getChild(String name) {
         for (var child : children) {
             if (name.equals(child.name))
                 return Optional.of(child);
