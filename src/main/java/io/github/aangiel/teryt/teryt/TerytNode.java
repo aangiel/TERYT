@@ -1,6 +1,7 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -14,6 +15,7 @@ import java.util.TreeSet;
 @ToString(exclude = "parent")
 @EqualsAndHashCode(of = {"code", "name", "description"})
 @Getter
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TerytNode implements Serializable {
 
     @JsonIgnore
