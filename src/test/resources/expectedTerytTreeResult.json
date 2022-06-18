@@ -1,0 +1,265 @@
+{
+  "name" : "",
+  "code" : "root",
+  "description" : "",
+  "date" : null,
+  "children" : [ {
+    "name" : "dates",
+    "code" : "",
+    "description" : "",
+    "date" : null,
+    "children" : [ {
+      "name" : "nts",
+      "code" : "",
+      "description" : "",
+      "date" : 1483225200000,
+      "children" : [ ]
+    }, {
+      "name" : "simc",
+      "code" : "",
+      "description" : "",
+      "date" : 1640991600000,
+      "children" : [ ]
+    }, {
+      "name" : "terc",
+      "code" : "",
+      "description" : "",
+      "date" : 1640991600000,
+      "children" : [ ]
+    }, {
+      "name" : "ulic",
+      "code" : "",
+      "description" : "",
+      "date" : 1655416800000,
+      "children" : [ ]
+    } ]
+  }, {
+    "name" : "dictionaries",
+    "code" : "",
+    "description" : "",
+    "date" : null,
+    "children" : [ {
+      "name" : "simcType",
+      "code" : "",
+      "description" : "",
+      "date" : null,
+      "children" : [ {
+        "name" : "część",
+        "code" : "00",
+        "description" : "część miejscowości",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "część miasta",
+        "code" : "99",
+        "description" : "część miasta",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "delegatura",
+        "code" : "98",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "dzielnica",
+        "code" : "95",
+        "description" : "dzielnica m.st. Warszawy",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "kolonia",
+        "code" : "02",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "miasto",
+        "code" : "96",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "osada",
+        "code" : "04",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "osada leśna",
+        "code" : "05",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "osiedle",
+        "code" : "06",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "przysiółek",
+        "code" : "03",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "schronisko turystyczne",
+        "code" : "07",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "wieś",
+        "code" : "01",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      } ]
+    }, {
+      "name" : "streetProperties",
+      "code" : "",
+      "description" : "",
+      "date" : null,
+      "children" : [ {
+        "name" : "aleja",
+        "code" : "al.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "bulwar",
+        "code" : "bulw.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "droga",
+        "code" : "droga",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "inne",
+        "code" : "inne",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "ogród",
+        "code" : "ogród",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "osiedle",
+        "code" : "os.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "park",
+        "code" : "park",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "plac",
+        "code" : "pl.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "rondo",
+        "code" : "rondo",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "rynek",
+        "code" : "rynek",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "skwer",
+        "code" : "skwer",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "szosa",
+        "code" : "szosa",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "ulica",
+        "code" : "ul.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "wybrzeże",
+        "code" : "wyb.",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "wyspa",
+        "code" : "wyspa",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      } ]
+    }, {
+      "name" : "unitType",
+      "code" : "",
+      "description" : "",
+      "date" : null,
+      "children" : [ {
+        "name" : "delegatury miast: Kraków",
+        "code" : "9",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "dzielnice m. st. Warszawy",
+        "code" : "8",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "gmina miejska",
+        "code" : "1",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "gmina miejsko-wiejska",
+        "code" : "3",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "gmina wiejska",
+        "code" : "2",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "miasto w gminie miejsko-wiejskiej",
+        "code" : "4",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      }, {
+        "name" : "obszar wiejski w gminie miejsko-wiejskiej",
+        "code" : "5",
+        "description" : "",
+        "date" : null,
+        "children" : [ ]
+      } ]
+    } ]
+  } ]
+}

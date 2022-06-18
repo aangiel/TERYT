@@ -2,13 +2,14 @@ package io.github.aangiel.teryt.teryt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.exceptions.CsvException;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TerytDownloaderTest {
 
@@ -36,14 +37,16 @@ class TerytDownloaderTest {
     void downloadData() throws IOException, CsvException {
         var downloader = new TerytDownloader();
         downloader.downloadData();
-        var downloaded = downloader.getDownloadedRoot();
+        var downloadedRoot = downloader.getDownloadedRoot();
 
-        var pretty = new ObjectMapper().writerWithDefaultPrettyPrinter()
-                .writeValueAsString(downloaded);
+        var result = new ObjectMapper().writerWithDefaultPrettyPrinter()
+                .writeValueAsString(downloadedRoot);
 
-        Files.writeString(Path.of("target", "tmp", "mapResultUTF.json"), pretty);
+        Files.writeString(Path.of("target", "tmp", "terytTreeResult.json"), result);
 
-        fail();
+        var expected = FileUtils.readFileToString(Path.of("src", "test", "resources", "expectedTerytTreeResult.json").toFile());
+
+        assertEquals(expected, result);
     }
 
 //    @Test

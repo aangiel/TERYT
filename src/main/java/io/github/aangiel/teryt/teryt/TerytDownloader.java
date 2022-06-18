@@ -40,7 +40,7 @@ public class TerytDownloader {
 
         downloadDictionaries();
 
-        downloadCatalogs();
+//        downloadCatalogs();
     }
 
 
