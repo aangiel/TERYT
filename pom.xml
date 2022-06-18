@@ -112,6 +112,11 @@
             <artifactId>tabula</artifactId>
             <version>1.0.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.6</version>
+        </dependency>
 
 
     </dependencies>

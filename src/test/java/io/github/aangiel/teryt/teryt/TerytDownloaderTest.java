@@ -1,6 +1,7 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.exceptions.CsvException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,10 +33,10 @@ class TerytDownloaderTest {
 //    }
 
     @Test
-    void downloadData() throws IOException {
+    void downloadData() throws IOException, CsvException {
         var downloader = new TerytDownloader();
         downloader.downloadData();
-        var downloaded = downloader.getDownloadedCatalogs();
+        var downloaded = downloader.getDownloadedRoot();
 
         var pretty = new ObjectMapper().writerWithDefaultPrettyPrinter()
                 .writeValueAsString(downloaded);
