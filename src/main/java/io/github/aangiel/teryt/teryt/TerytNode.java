@@ -43,6 +43,13 @@ public class TerytNode implements Serializable {
         return child;
     }
 
+    TerytNode addChildIfNotExists(TerytNodeBuilder childBuilder) {
+        var child = getChildByCode(childBuilder.code);
+        if (child == null)
+            return addChild(childBuilder);
+        return child;
+    }
+
     TerytNode getChildByCode(String code) {
         return children.get(code);
     }

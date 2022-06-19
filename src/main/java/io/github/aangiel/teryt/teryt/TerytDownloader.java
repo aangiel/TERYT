@@ -120,7 +120,12 @@ public class TerytDownloader {
         var ulicDate = dates.getChildByCode("ulic").getDate();
 
 
-        downloadTercCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogTERC(tercDate), "terc");
+
+        downloadCatalog(catalogs, terytClient.pobierzKatalogSIMCAdr(simcDate), "simc-address");
+
+
 
 //        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
 //        this.downloadedCatalogs.putAll(tercCatalog);
@@ -160,7 +165,7 @@ public class TerytDownloader {
     }
 
 
-    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
+    private void downloadCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
 
 
         var catalog = catalogs.addChild(TerytNode.builder().code(catalogName));
@@ -175,6 +180,27 @@ public class TerytDownloader {
             catalog.addChild(TerytNode.builder().code(date));
         }
 
+        if (catalogName.startsWith("terc")) downloadTercCatalog(catalog, lines);
+//        if (catalogName.equals("simc-stat")) downloadSimcStatCatalog(catalog, lines);
+        if (catalogName.startsWith("simc")) downloadSimcCatalog(catalog, lines);
+    }
+
+    private void downloadSimcCatalog(TerytNode catalog, List<String[]> lines) {
+        //WOJ;POW;GMI;RODZ_GMI;RM;MZ;NAZWA;SYM;SYMPOD;STAN_NA
+        for (var line : lines) {
+            catalog.getChildByCode(line[line.length - 1])
+                    .addChildIfNotExists(TerytNode.builder().code(line[0]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[1]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[2]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[3]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[4]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[5]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[8]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[7]).name(line[6]));
+        }
+    }
+
+    private void downloadTercCatalog(TerytNode catalog, List<String[]> lines) {
         var grouped = lines.stream()
                 .collect(Collectors.groupingBy(l -> {
                     if (l[5].equals("województwo")) return "V";
