@@ -127,39 +127,16 @@ public class TerytDownloader {
         downloadCatalog(catalogs, terytClient.pobierzKatalogSIMC(simcDate), "simc");
         downloadCatalog(catalogs, terytClient.pobierzKatalogSIMCStat(simcDate), "simc-stat");
 
+        downloadCatalog(catalogs, terytClient.pobierzKatalogULIC(ulicDate), "ulic");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogULICAdr(ulicDate), "ulic-address");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogULICBezDzielnic(ulicDate), "ulic-without-districts");
 
 
-//        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
-//        this.downloadedCatalogs.putAll(tercCatalog);
-//        log.trace(tercCatalog);
-//
+
 //        var ntsCatalog = download(terytClient.pobierzKatalogNTS(dates.get(Constants.TERYT_CATALOG_NTS)), "nts");
 //        this.downloadedCatalogs.putAll(ntsCatalog);
 //        log.trace(ntsCatalog);
 //
-//        var simcAddressesCatalog = download(terytClient.pobierzKatalogSIMCAdr(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-address");
-//        this.downloadedCatalogs.putAll(simcAddressesCatalog);
-//        log.trace(simcAddressesCatalog);
-//
-//        var simcCatalog = download(terytClient.pobierzKatalogSIMC(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc");
-//        this.downloadedCatalogs.putAll(simcCatalog);
-//        log.trace(simcCatalog);
-//
-//        var simcStatCatalog = download(terytClient.pobierzKatalogSIMCStat(dates.get(Constants.TERYT_CATALOG_SIMC)), "simc-stat");
-//        this.downloadedCatalogs.putAll(simcStatCatalog);
-//        log.trace(simcStatCatalog);
-//
-//        var ulicCatalog = download(terytClient.pobierzKatalogULIC(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic");
-//        this.downloadedCatalogs.putAll(ulicCatalog);
-//        log.trace(ulicCatalog);
-//
-//        var ulicAddressesCatalog = download(terytClient.pobierzKatalogULICAdr(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-address");
-//        this.downloadedCatalogs.putAll(ulicAddressesCatalog);
-//        log.trace(ulicAddressesCatalog);
-//
-//        var ulicWithoutDistrictsCatalog = download(terytClient.pobierzKatalogULICBezDzielnic(dates.get(Constants.TERYT_CATALOG_ULIC)), "ulic-without-district");
-//        this.downloadedCatalogs.putAll(ulicWithoutDistrictsCatalog);
-//        log.trace(ulicWithoutDistrictsCatalog);
 //
 //        var townTypeCatalog = download(terytClient.pobierzKatalogWMRODZ(dates.get(Constants.TERYT_CATALOG_SIMC)), "type");
 //        this.downloadedCatalogs.putAll(townTypeCatalog);
@@ -185,6 +162,21 @@ public class TerytDownloader {
         if (catalogName.startsWith("terc")) downloadTercCatalog(catalog, lines);
         if ("simc-stat".equals(catalogName)) downloadSimcStatCatalog(catalog, lines);
         if ("simc".equals(catalogName) || "simc-address".equals(catalogName)) downloadSimcCatalog(catalog, lines);
+        if (catalogName.startsWith("ulic")) downloadUlicCatalog(catalog, lines);
+    }
+
+    private void downloadUlicCatalog(TerytNode catalog, List<String[]> lines) {
+        // WOJ;POW;GMI;RODZ_GMI;SYM; SYM_UL;CECHA;NAZWA_1;NAZWA_2;STAN_NA
+
+        for (var line : lines) {
+            catalog.getChildByCode(line[line.length - 1])
+                    .addChildIfNotExists(TerytNode.builder().code(line[0]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[1]).extraName("powiat"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[2]).extraName("gmina"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[3]).extraName("rodzaj gminy"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[4]).extraName("symbol miejscowości"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[5]).type(line[6]).name(line[7]).extraName(line[8]));
+        }
     }
 
     private void downloadSimcStatCatalog(TerytNode catalog, List<String[]> lines) {
