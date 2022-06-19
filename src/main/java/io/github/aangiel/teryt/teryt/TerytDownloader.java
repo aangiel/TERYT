@@ -1,6 +1,5 @@
 package io.github.aangiel.teryt.teryt;
 
-import com.google.common.collect.ImmutableList;
 import com.opencsv.exceptions.CsvException;
 import io.github.aangiel.teryt.Constants;
 import io.github.aangiel.teryt.ws.ITerytWs1;
@@ -18,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Log4j
 public class TerytDownloader {
@@ -120,7 +120,7 @@ public class TerytDownloader {
         var ulicDate = dates.getChildByCode("ulic").getDate();
 
 
-        downloadCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
+        downloadTercCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
 
 //        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
 //        this.downloadedCatalogs.putAll(tercCatalog);
@@ -160,50 +160,53 @@ public class TerytDownloader {
     }
 
 
-    private void downloadCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
+    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
 
 
         var catalog = catalogs.addChild(TerytNode.builder().code(catalogName));
         var lines = getCsvLines(catalogFile);
-        List<String[]> sortedFields = List.of();
-        int stopIndex = 0;
 
-        if (catalogName.startsWith("terc")) {
-            sortedFields = sortFieldsForTerc(lines);
-            stopIndex = 4;
+        var dates = lines.stream()
+                .map(l -> l[l.length - 1])
+                .distinct()
+                .toList();
+
+        for (var date : dates) {
+            catalog.addChild(TerytNode.builder().code(date));
         }
 
-        for (var line : sortedFields) {
-            var stateDate = catalog.getChildByCode(line[0]);
-            if (stateDate == null) {
-                stateDate = catalog.addChild(TerytNode.builder().code(line[0]));
-            }
-            var lastNode = stateDate;
-            for (int i = 0; i < stopIndex; i++) {
-                var currentNode = lastNode.getChildByCode(line[i+1]);
-                if (currentNode == null) {
-                    var builder = TerytNode.builder().code(line[i+1]).name(line[5]).extraName(line[6]);
-                    if (!line[i+2].isEmpty())
-                        builder = builder.type(line[i+2]);
-                    lastNode.addChild(builder);
-                    break;
-                }
-                lastNode = currentNode;
-            }
+        var grouped = lines.stream()
+                .collect(Collectors.groupingBy(l -> {
+                    if (l[5].equals("województwo")) return "V";
+                    if (l[5].contains("powiat")) return "C";
+                    return "R";
+                }));
 
-        }
-    }
-
-    private List<String[]> sortFieldsForTerc(List<String[]> lines) {
-        var result = ImmutableList.<String[]>builder();
-        for (var line : lines) {
-            var newLine = new String[]{
-                    line[6], line[0], line[1], line[2], line[3], line[4], line[5]
-            };
-            result.add(newLine);
+        for (var voivodeship : grouped.get("V")) {
+            catalog.getChildByCode(voivodeship[6])
+                    .addChild(TerytNode.builder().code(voivodeship[0]).name(voivodeship[4]).extraName(voivodeship[5]));
         }
 
-        return result.build();
+        for (var county : grouped.get("C")) {
+            catalog.getChildByCode(county[6])
+                    .getChildByCode(county[0])
+                    .addChild(TerytNode.builder().code(county[1]).name(county[4]).extraName(county[5]));
+        }
+
+        for (var community : grouped.get("R")) {
+            catalog.getChildByCode(community[6])
+                    .getChildByCode(community[0])
+                    .getChildByCode(community[1])
+                    .addChild(TerytNode.builder().code(community[2]).name(community[4]));
+        }
+
+        for (var communityType : grouped.get("R")) {
+            catalog.getChildByCode(communityType[6])
+                    .getChildByCode(communityType[0])
+                    .getChildByCode(communityType[1])
+                    .getChildByCode(communityType[2])
+                    .addChild(TerytNode.builder().code(communityType[3]).name(communityType[5]));
+        }
     }
 
     private List<String[]> getCsvLines(PlikKatalog catalogFile) throws IOException {
