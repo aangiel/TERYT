@@ -1,6 +1,5 @@
 package io.github.aangiel.teryt.teryt;
 
-import com.opencsv.exceptions.CsvException;
 import io.github.aangiel.teryt.Constants;
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import io.github.aangiel.teryt.ws.PlikKatalog;
@@ -25,7 +24,7 @@ public class TerytDownloader {
     private static final ITerytWs1 terytClient = TerytClient.create(Constants.TERYT_USER, Constants.TERYT_PASS);
 
 
-    public TerytNode downloadData() throws IOException, CsvException {
+    public TerytNode downloadData() throws IOException {
 
         var root = TerytNode.createRoot();
         var dates = downloadDates(root);
@@ -133,16 +132,10 @@ public class TerytDownloader {
 
         downloadCatalog(catalogs, terytClient.pobierzKatalogNTS(ulicDate), "nts");
 
+        downloadCatalog(catalogs, terytClient.pobierzKatalogWMRODZ(simcDate), "wmrodz");
 
 
-//        var ntsCatalog = download(terytClient.pobierzKatalogNTS(dates.get(Constants.TERYT_CATALOG_NTS)), "nts");
-//        this.downloadedCatalogs.putAll(ntsCatalog);
-//        log.trace(ntsCatalog);
-//
-//
-//        var townTypeCatalog = download(terytClient.pobierzKatalogWMRODZ(dates.get(Constants.TERYT_CATALOG_SIMC)), "type");
-//        this.downloadedCatalogs.putAll(townTypeCatalog);
-//        log.trace(townTypeCatalog);
+
     }
 
 
@@ -166,6 +159,14 @@ public class TerytDownloader {
         if ("simc".equals(catalogName) || "simc-address".equals(catalogName)) downloadSimcCatalog(catalog, lines);
         if (catalogName.startsWith("ulic")) downloadUlicCatalog(catalog, lines);
         if ("nts".equals(catalogName)) downloadNtsCatalog(catalog, lines);
+        if ("wmrodz".equals(catalogName)) downloadWmrodzCatalog(catalog, lines);
+    }
+
+    private void downloadWmrodzCatalog(TerytNode catalog, List<String[]> lines) {
+        for (var line : lines) {
+            catalog.addChildIfNotExists(TerytNode.builder().code(line[2]))
+                    .addChildIfNotExists(TerytNode.builder().code(line[0]).name(line[1]));
+        }
     }
 
     private void downloadNtsCatalog(TerytNode catalog, List<String[]> lines) {
@@ -252,8 +253,7 @@ public class TerytDownloader {
                     .addChildIfNotExists(TerytNode.builder().code(line[9]).extraName("identyfikator miejscowości statystycznej"))
                     .addChildIfNotExists(TerytNode.builder().code(line[6]).extraName("numer miejscowości statystycznej"))
                     .addChildIfNotExists(TerytNode.builder().code(line[7]).extraName("numer miejscowości składowej"))
-                    .addChildIfNotExists(TerytNode.builder().code(line[8]).name(line[10]).extraName("określenie miejscowości"))
-                    ;
+                    .addChildIfNotExists(TerytNode.builder().code(line[8]).name(line[10]).extraName("określenie miejscowości"));
         }
     }
 
