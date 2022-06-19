@@ -124,6 +124,8 @@ public class TerytDownloader {
         downloadCatalog(catalogs, terytClient.pobierzKatalogTERC(tercDate), "terc");
 
         downloadCatalog(catalogs, terytClient.pobierzKatalogSIMCAdr(simcDate), "simc-address");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogSIMC(simcDate), "simc");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogSIMCStat(simcDate), "simc-stat");
 
 
 
@@ -181,22 +183,43 @@ public class TerytDownloader {
         }
 
         if (catalogName.startsWith("terc")) downloadTercCatalog(catalog, lines);
-//        if (catalogName.equals("simc-stat")) downloadSimcStatCatalog(catalog, lines);
-        if (catalogName.startsWith("simc")) downloadSimcCatalog(catalog, lines);
+        if ("simc-stat".equals(catalogName)) downloadSimcStatCatalog(catalog, lines);
+        if ("simc".equals(catalogName) || "simc-address".equals(catalogName)) downloadSimcCatalog(catalog, lines);
+    }
+
+    private void downloadSimcStatCatalog(TerytNode catalog, List<String[]> lines) {
+//        WOJ;POW;GMI;RODZ_GMI;RM;    MZ;NMST;NMSK;SYMBM;SYMSTAT;      NAZWA;SYM;SYMPOD;STAN_NA
+
+        for (var line : lines) {
+            catalog.getChildByCode(line[line.length - 1])
+                    .addChildIfNotExists(TerytNode.builder().code(line[0]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[1]).extraName("powiat"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[2]).extraName("gmina"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[3]).extraName("rodzaj gminy"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[4]).extraName("rodzaj miejscowości"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[5]).extraName("występowanie nazwy zwyczajowej"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[12]).extraName("symbol podstawowy"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[11]).extraName("symbol"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[9]).extraName("identyfikator miejscowości statystycznej"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[6]).extraName("numer miejscowości statystycznej"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[7]).extraName("numer miejscowości składowej"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[8]).name(line[10]).extraName("określenie miejscowości"))
+                    ;
+        }
     }
 
     private void downloadSimcCatalog(TerytNode catalog, List<String[]> lines) {
         //WOJ;POW;GMI;RODZ_GMI;RM;MZ;NAZWA;SYM;SYMPOD;STAN_NA
         for (var line : lines) {
             catalog.getChildByCode(line[line.length - 1])
-                    .addChildIfNotExists(TerytNode.builder().code(line[0]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[1]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[2]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[3]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[4]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[5]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[8]))
-                    .addChildIfNotExists(TerytNode.builder().code(line[7]).name(line[6]));
+                    .addChildIfNotExists(TerytNode.builder().code(line[0]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[1]).extraName("powiat"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[2]).extraName("gmina"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[3]).extraName("rodzaj gminy"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[4]).extraName("rodzaj miejscowości"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[5]).extraName("występowanie nazwy zwyczajowej"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[8]).extraName("symbol podstawowy"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[7]).name(line[6]).extraName("symbol"));
         }
     }
 
