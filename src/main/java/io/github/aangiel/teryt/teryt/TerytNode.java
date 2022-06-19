@@ -22,6 +22,7 @@ public class TerytNode implements Serializable {
     private final String code;
     private final String description;
     private final String extraName;
+    private final String type;
     private final XMLGregorianCalendar date;
 
     private final TreeMap<String, TerytNode> children = new TreeMap<>(Comparator.naturalOrder());
@@ -53,6 +54,7 @@ public class TerytNode implements Serializable {
         private String code;
         private String description;
         private String extraName;
+        private String type;
         private XMLGregorianCalendar date;
 
         TerytNodeBuilder() {
@@ -83,13 +85,18 @@ public class TerytNode implements Serializable {
             return this;
         }
 
+        public TerytNodeBuilder type(String type) {
+            this.type = type;
+            return this;
+        }
+
         public TerytNodeBuilder date(XMLGregorianCalendar date) {
             this.date = date;
             return this;
         }
 
         public TerytNode build() {
-            return new TerytNode(parent, name, code, description, extraName, date);
+            return new TerytNode(parent, name, code, description, extraName, type, date);
         }
 
         public String toString() {

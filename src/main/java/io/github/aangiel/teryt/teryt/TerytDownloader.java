@@ -1,5 +1,6 @@
 package io.github.aangiel.teryt.teryt;
 
+import com.google.common.collect.ImmutableList;
 import com.opencsv.exceptions.CsvException;
 import io.github.aangiel.teryt.Constants;
 import io.github.aangiel.teryt.ws.ITerytWs1;
@@ -119,8 +120,7 @@ public class TerytDownloader {
         var ulicDate = dates.getChildByCode("ulic").getDate();
 
 
-        var tercCatalogFile = terytClient.pobierzKatalogTERCAdr(tercDate);
-        downloadTercCatalog(catalogs, tercCatalogFile , "terc-address");
+        downloadCatalog(catalogs, terytClient.pobierzKatalogTERCAdr(tercDate), "terc-address");
 
 //        var tercCatalog = download(terytClient.pobierzKatalogTERC(dates.get(Constants.TERYT_CATALOG_TERC)), "terc");
 //        this.downloadedCatalogs.putAll(tercCatalog);
@@ -160,47 +160,50 @@ public class TerytDownloader {
     }
 
 
-    private void downloadTercCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
+    private void downloadCatalog(TerytNode catalogs, PlikKatalog catalogFile, String catalogName) throws IOException {
 
 
         var catalog = catalogs.addChild(TerytNode.builder().code(catalogName));
         var lines = getCsvLines(catalogFile);
+        List<String[]> sortedFields = List.of();
+        int stopIndex = 0;
 
-        for (var line : lines) {
-
-
-            var voivodeship = line[0];
-            var county = line[1];
-            var community = line[2];
-            var type = line[3];
-            var name = line[4];
-            var extraName = line[5];
-            var stateDate = line[6];
-
-            var stateDateNode = catalog.getChildByCode(stateDate);
-            if (stateDateNode == null) {
-                stateDateNode = catalog.addChild(TerytNode.builder().code(stateDate));
-
-            }
-
-            var voivodeshipNode = stateDateNode.getChildByCode(voivodeship);
-            if (voivodeshipNode == null) {
-                stateDateNode.addChild(TerytNode.builder().code(voivodeship).name(name).extraName(extraName));
-                continue;
-            }
-
-            var countyNode = voivodeshipNode.getChildByCode(county);
-            if (countyNode == null) {
-                voivodeshipNode.addChild(TerytNode.builder().code(county).name(name).extraName(extraName));
-                continue;
-            }
-
-            countyNode.addChild(TerytNode.builder().code(community).name(name))
-                    .addChild(TerytNode.builder().code(type).name(extraName));
-
+        if (catalogName.startsWith("terc")) {
+            sortedFields = sortFieldsForTerc(lines);
+            stopIndex = 4;
         }
 
+        for (var line : sortedFields) {
+            var stateDate = catalog.getChildByCode(line[0]);
+            if (stateDate == null) {
+                stateDate = catalog.addChild(TerytNode.builder().code(line[0]));
+            }
+            var lastNode = stateDate;
+            for (int i = 0; i < stopIndex; i++) {
+                var currentNode = lastNode.getChildByCode(line[i+1]);
+                if (currentNode == null) {
+                    var builder = TerytNode.builder().code(line[i+1]).name(line[5]).extraName(line[6]);
+                    if (!line[i+2].isEmpty())
+                        builder = builder.type(line[i+2]);
+                    lastNode.addChild(builder);
+                    break;
+                }
+                lastNode = currentNode;
+            }
 
+        }
+    }
+
+    private List<String[]> sortFieldsForTerc(List<String[]> lines) {
+        var result = ImmutableList.<String[]>builder();
+        for (var line : lines) {
+            var newLine = new String[]{
+                    line[6], line[0], line[1], line[2], line[3], line[4], line[5]
+            };
+            result.add(newLine);
+        }
+
+        return result.build();
     }
 
     private List<String[]> getCsvLines(PlikKatalog catalogFile) throws IOException {
