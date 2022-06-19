@@ -131,6 +131,8 @@ public class TerytDownloader {
         downloadCatalog(catalogs, terytClient.pobierzKatalogULICAdr(ulicDate), "ulic-address");
         downloadCatalog(catalogs, terytClient.pobierzKatalogULICBezDzielnic(ulicDate), "ulic-without-districts");
 
+        downloadCatalog(catalogs, terytClient.pobierzKatalogNTS(ulicDate), "nts");
+
 
 
 //        var ntsCatalog = download(terytClient.pobierzKatalogNTS(dates.get(Constants.TERYT_CATALOG_NTS)), "nts");
@@ -163,6 +165,61 @@ public class TerytDownloader {
         if ("simc-stat".equals(catalogName)) downloadSimcStatCatalog(catalog, lines);
         if ("simc".equals(catalogName) || "simc-address".equals(catalogName)) downloadSimcCatalog(catalog, lines);
         if (catalogName.startsWith("ulic")) downloadUlicCatalog(catalog, lines);
+        if ("nts".equals(catalogName)) downloadNtsCatalog(catalog, lines);
+    }
+
+    private void downloadNtsCatalog(TerytNode catalog, List<String[]> lines) {
+//        POZIOM;REGION;WOJ;PODREG;POW; GMI;RODZ;NAZWA;NAZWA_DOD;STAN_NA
+
+        var grouped = lines.stream()
+                .collect(Collectors.groupingBy(l -> {
+                    if (l[8].equals("region")) return "REG";
+                    if (l[8].equals("województwo")) return "VOI";
+                    if (l[8].equals("podregion")) return "SRG";
+                    if (l[8].contains("powiat")) return "CNT";
+                    return "RST";
+                }));
+
+        for (var region : grouped.get("REG")) {
+            catalog.getChildByCode(region[9])
+//                    .addChildIfNotExists(TerytNode.builder().code(region[0]).extraName("poziom"))
+                    .addChildIfNotExists(TerytNode.builder().code(region[1]).name(region[7]).extraName("region"));
+        }
+
+        for (var voivodeship : grouped.get("VOI")) {
+            catalog.getChildByCode(voivodeship[9])
+//                    .addChildIfNotExists(TerytNode.builder().code("2").extraName("poziom"))
+                    .addChildIfNotExists(TerytNode.builder().code(voivodeship[1]).extraName("region"))
+                    .addChildIfNotExists(TerytNode.builder().code(voivodeship[2]).name(voivodeship[7]).extraName("województwo"));
+        }
+
+        for (var subregion : grouped.get("SRG")) {
+            catalog.getChildByCode(subregion[9])
+//                    .addChildIfNotExists(TerytNode.builder().code(subregion[0]).extraName("poziom"))
+                    .addChildIfNotExists(TerytNode.builder().code(subregion[1]).extraName("region"))
+                    .addChildIfNotExists(TerytNode.builder().code(subregion[2]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(subregion[3]).name(subregion[7]).extraName("podregion"));
+        }
+
+        for (var county : grouped.get("CNT")) {
+            catalog.getChildByCode(county[9])
+//                    .addChildIfNotExists(TerytNode.builder().code(county[0]).extraName("poziom"))
+                    .addChildIfNotExists(TerytNode.builder().code(county[1]).extraName("region"))
+                    .addChildIfNotExists(TerytNode.builder().code(county[2]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(county[3]).extraName("podregion"))
+                    .addChildIfNotExists(TerytNode.builder().code(county[4]).name(county[7]).extraName(county[8]));
+        }
+
+        for (var line : grouped.get("RST")) {
+            catalog.getChildByCode(line[9])
+//                    .addChildIfNotExists(TerytNode.builder().code(line[0]).extraName("poziom"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[1]).extraName("region"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[2]).extraName("województwo"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[3]).extraName("podregion"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[4]).extraName("powiat"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[5]).name(line[7]).extraName("gmina"))
+                    .addChildIfNotExists(TerytNode.builder().code(line[6]).type(line[7]).extraName(line[8]));
+        }
     }
 
     private void downloadUlicCatalog(TerytNode catalog, List<String[]> lines) {
