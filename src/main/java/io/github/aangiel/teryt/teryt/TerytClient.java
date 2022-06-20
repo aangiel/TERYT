@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-class TerytClient {
+public class TerytClient {
 
 
     protected TerytClient() {

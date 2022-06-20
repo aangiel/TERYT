@@ -15,9 +15,9 @@ final class PnaDocument {
     private final List<PnaPage> pages = new LinkedList<>();
 
     PnaPage getPage(int pageNumber) {
-        try {
+        if (pageNumber < pages.size() - 1) {
             return pages.get(pageNumber);
-        } catch (IndexOutOfBoundsException e) {
+        } else {
             var page = PnaPage.create();
             pages.add(page);
             return page;

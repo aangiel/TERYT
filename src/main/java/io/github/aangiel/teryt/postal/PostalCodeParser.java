@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 @Log4j
 public final class PostalCodeParser {
@@ -20,11 +21,13 @@ public final class PostalCodeParser {
         return new PostalCodeParser(pdfToStrip);
     }
 
-    public List<Map<String, String>> parse() {
+    public List<PnaRecord> parse() {
 
         var pnaDocument = this.postalCodeStripper.strip();
         return pnaDocument.stream()
                 .flatMap(PnaPage::stream)
+                .filter(Predicate.not(Map::isEmpty))
+                .map(PnaRecord::create)
                 .toList();
     }
 

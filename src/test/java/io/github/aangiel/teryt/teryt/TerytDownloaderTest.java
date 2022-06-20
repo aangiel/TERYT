@@ -1,16 +1,5 @@
 package io.github.aangiel.teryt.teryt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.opencsv.exceptions.CsvException;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class TerytDownloaderTest {
 
 //    @Test
@@ -33,20 +22,20 @@ class TerytDownloaderTest {
 //        downloader.writeToRedis();
 //    }
 
-    @Test
-    void downloadData() throws IOException, CsvException {
-        var downloader = new TerytDownloader();
-        var downloadedRoot = downloader.downloadData();
-
-        var result = new ObjectMapper()//.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(downloadedRoot);
+//    @Test
+//    void downloadData() throws IOException, CsvException {
+//        var downloader = new TerytDownloader();
+//        var downloadedRoot = downloader.downloadData();
 //
-        Files.writeString(Path.of("target", "tmp", "expectedTerytTreeResult.json"), result);
-//
-        var expected = FileUtils.readFileToString(Path.of("src", "test", "resources", "expectedTerytTreeResult.json").toFile());
-//
-        assertEquals(expected, result);
-    }
+//        var result = new ObjectMapper()//.writerWithDefaultPrettyPrinter()
+//                .writeValueAsString(downloadedRoot);
+////
+//        Files.writeString(Path.of("target", "tmp", "expectedTerytTreeResult.json"), result);
+////
+//        var expected = FileUtils.readFileToString(Path.of("src", "test", "resources", "expectedTerytTreeResult.json").toFile());
+////
+//        assertEquals(expected, result);
+//    }
 
 //    @Test
 //    void getDates() throws DatatypeConfigurationException {
