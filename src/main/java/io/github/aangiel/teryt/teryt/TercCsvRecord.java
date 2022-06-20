@@ -10,6 +10,9 @@ import java.util.stream.Stream;
 @Getter
 public class TercCsvRecord extends CsvRecord {
 
+    private String key = null;
+    private String parentKey = null;
+
     @CsvBindByName(required = true, column = "﻿WOJ", locale = "pl_PL")
     private String voivodeshipCode;
 
@@ -32,17 +35,23 @@ public class TercCsvRecord extends CsvRecord {
     private String stateDate;
 
     public String createKey(String catalogName) {
-        return Stream.of(catalogName, stateDate, voivodeshipCode, countyCode, communityCode, communityType)
-                .filter(Predicate.not(String::isEmpty))
-                .collect(Collectors.joining(":"));
+        if (key == null)
+            this.key = Stream.of(catalogName, stateDate, voivodeshipCode, countyCode, communityCode, communityType)
+                    .filter(Predicate.not(String::isEmpty))
+                    .collect(Collectors.joining(":"));
+
+        return this.key;
     }
 
     public String retrieveParentKey(String catalogName) {
-        var parentKey = Stream.of(catalogName, stateDate, voivodeshipCode, countyCode, communityCode)
-                .filter(Predicate.not(String::isEmpty))
-                .collect(Collectors.joining(":"));
+        if (this.parentKey == null) {
+            var pk = Stream.of(catalogName, stateDate, voivodeshipCode, countyCode, communityCode)
+                    .filter(Predicate.not(String::isEmpty))
+                    .collect(Collectors.joining(":"));
+            this.parentKey = pk.substring(0, pk.lastIndexOf(":"));
+        }
 
-        return parentKey.substring(0, parentKey.lastIndexOf(":"));
+        return parentKey;
     }
 
 }

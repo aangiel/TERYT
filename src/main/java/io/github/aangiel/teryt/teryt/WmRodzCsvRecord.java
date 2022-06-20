@@ -1,7 +1,9 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.opencsv.bean.CsvBindByName;
+import lombok.Getter;
 
+@Getter
 public class WmRodzCsvRecord extends CsvRecord {
 
     @CsvBindByName(required = true, column = "\uFEFFRM", locale = "pl_PL")
