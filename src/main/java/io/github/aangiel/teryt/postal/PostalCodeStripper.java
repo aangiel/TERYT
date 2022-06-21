@@ -8,20 +8,24 @@ import org.apache.pdfbox.text.TextPosition;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
 
-    private final PnaDocument pnaDocument = PnaDocument.create();
     private final File pdfToStrip;
+
+    private final Map<Integer, List<OneCharacter>> pages = new LinkedHashMap<>();
 
     PostalCodeStripper(File pdfToStrip) throws IOException {
         super();
         this.pdfToStrip = pdfToStrip;
     }
 
-    PnaDocument strip() {
+    Map<Integer, List<OneCharacter>> strip() {
         try (PDDocument document = PDDocument.load(pdfToStrip)) {
             super.setSortByPosition(true);
             super.writeText(document, Writer.nullWriter());
@@ -29,7 +33,7 @@ final class PostalCodeStripper extends PDFTextStripper {
             e.printStackTrace();
             log.info(e.getMessage());
         }
-        return pnaDocument;
+        return pages;
     }
 
     @Override
@@ -44,6 +48,11 @@ final class PostalCodeStripper extends PDFTextStripper {
 
     @Override
     protected void writeString(String text, List<TextPosition> textPositions) {
-        pnaDocument.getPage(super.getCurrentPageNo()).addWord(text, textPositions);
+
+        for (var textPosition : textPositions) {
+            var charactersList = pages.getOrDefault(getCurrentPageNo(), new LinkedList<>());
+            charactersList.add(OneCharacter.create(textPosition, textPositions.get(0)));
+            pages.put(getCurrentPageNo(), charactersList);
+        }
     }
 }
