@@ -2,6 +2,7 @@ package io.github.aangiel.teryt.merger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import io.github.aangiel.teryt.postal.PostalCodeParser;
 import io.github.aangiel.teryt.teryt.*;
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,11 @@ import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor(staticName = "create")
 @Log4j
@@ -24,10 +28,10 @@ public class TerytPostalMerger {
 
     private final ITerytWs1 terytClient;
 
+
     private final File postalCodesFile;
 
     public Map<String, Map<String, String>> merge() throws IOException {
-
         var tercDate = terytClient.pobierzDateAktualnegoKatTerc();
         var simcDate = terytClient.pobierzDateAktualnegoKatSimc();
         var ulicDate = terytClient.pobierzDateAktualnegoKatUlic();
@@ -53,8 +57,35 @@ public class TerytPostalMerger {
 
         FileUtils.writeStringToFile(Path.of("target", "tmp", "ulic.json").toFile(),
                 new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(ulicMap)
-                );
+        );
+
+
+        var simcPna = simcMap.entrySet().stream()
+                .distinct()
+                .map(
+                        k -> {
+                            var key = Stream.of(
+                                            k.getValue().get("województwo"),
+                                            k.getValue().get("powiat"),
+                                            k.getValue().get("gmina"),
+                                            k.getValue().get("nazwa")
+                                    ).filter(Objects::nonNull)
+                                    .filter(Predicate.not(String::isEmpty))
+                                    .collect(Collectors.joining(":"));
+                            return Map.entry(key, k.getKey());
+                        }
+                ).distinct()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+
+        var parsedPdf = PostalCodeParser.create(postalCodesFile).parse();
+
+//        var pnaMap = pnaMapSimc()
+
         return null;
+    }
+
+    private void pnaMapSimc() {
+
     }
 
     private Map<String, Map<String, String>> ulicMap(List<SimcCsvRecord> simcAddress,
@@ -73,7 +104,7 @@ public class TerytPostalMerger {
             var simcProperties = simcMap.getOrDefault(simcKey, ImmutableMap.of());
             var properties = ImmutableMap.of(
                     "województwo", simcProperties.getOrDefault("województwo", ""),
-                    "powiat", simcProperties.getOrDefault(  "powiat", ""),
+                    "powiat", simcProperties.getOrDefault("powiat", ""),
                     "gmina", simcProperties.getOrDefault("gmina", ""),
                     "rodzaj-gminy", simcProperties.getOrDefault("rodzaj-gminy", ""),
                     "miejscowość", simcProperties.getOrDefault("nazwa", ""),
@@ -101,8 +132,8 @@ public class TerytPostalMerger {
         var baseTownMap = simc.stream()
                 .filter(e -> e.getBaseSymbol().equals(e.getSymbol()))
                 .collect(Collectors.toMap(
-                   SimcCsvRecord::createBaseSymbolKey,
-                   v -> v.createKey("simc-address")
+                        SimcCsvRecord::createBaseSymbolKey,
+                        v -> v.createKey("simc-address")
                 ));
 
         var resultBuilder = ImmutableMap.<String, Map<String, String>>builder();
@@ -124,7 +155,7 @@ public class TerytPostalMerger {
                     "miejscowość-bazowa", simcMap.get(baseTown).getName(),
                     "nazwa", v.getName(),
                     "rodzaj-miejscowości", wmRodz.get(String.join(":", "wmRodz", "2013-02-28", v.getTownType())),
-                    "wystepowanie-nazwy-zwyczajowej", v.getHasUsualName()
+                    "występowanie-nazwy-zwyczajowej", v.getHasUsualName()
             );
 
 //            if (counter++ % 500 == 0)
