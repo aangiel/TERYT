@@ -1,6 +1,7 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.opencsv.bean.CsvBindByName;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.function.Predicate;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Getter
+@EqualsAndHashCode
 public class TercCsvRecord extends CsvRecord {
 
     private String key = null;

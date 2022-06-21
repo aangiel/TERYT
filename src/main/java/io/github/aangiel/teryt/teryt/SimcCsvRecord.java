@@ -1,14 +1,18 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.opencsv.bean.CsvBindByName;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode
 public class SimcCsvRecord extends CsvRecord {
 
     private String key = null;
     private String tercKey = null;
     private String baseSymbolKey = null;
+
+    private String ulicKey = null;
 
     @CsvBindByName(required = true, column = "﻿WOJ", locale = "pl_PL")
     private String voivodeshipCode;
@@ -44,7 +48,7 @@ public class SimcCsvRecord extends CsvRecord {
         if (this.key == null)
             this.key =  String.join(":", catalogName, stateDate, voivodeshipCode,
                 countyCode, communityCode, communityType,
-                townType, hasUsualName, baseSymbol, symbol);
+                townType, hasUsualName, symbol, baseSymbol);
 
         return this.key;
     }
@@ -55,6 +59,14 @@ public class SimcCsvRecord extends CsvRecord {
                 countyCode, communityCode, communityType);
 
         return this.tercKey;
+    }
+
+    public String createUlicKey() {
+        if (this.ulicKey == null)
+            this.ulicKey = String.join(":", voivodeshipCode,
+                    countyCode, communityCode, communityType, symbol);
+
+        return this.ulicKey;
     }
 
     public String createBaseSymbolKey() {

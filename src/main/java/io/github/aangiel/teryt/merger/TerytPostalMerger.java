@@ -1,14 +1,17 @@
 package io.github.aangiel.teryt.merger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.github.aangiel.teryt.teryt.*;
 import io.github.aangiel.teryt.ws.ITerytWs1;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
+import org.apache.commons.io.FileUtils;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +49,44 @@ public class TerytPostalMerger {
 
         var simcMap = simcMap(simcAddress, tercAddressMap, tercDate, wmRodzMap);
 
+        var ulicMap = ulicMap(simcAddress, ulicAddress, simcMap);
+
+        FileUtils.writeStringToFile(Path.of("target", "tmp", "ulic.json").toFile(),
+                new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(ulicMap)
+                );
         return null;
     }
+
+    private Map<String, Map<String, String>> ulicMap(List<SimcCsvRecord> simcAddress,
+                                                     List<UlicCsvRecord> ulicAddress,
+                                                     Map<String, Map<String, String>> simcMap) {
+        var simcTmpMap = simcAddress.stream()
+                .collect(Collectors.toMap(
+                        SimcCsvRecord::createUlicKey,
+                        v -> v.createKey("simc-address")
+                ));
+
+        var resultBuilder = ImmutableMap.<String, Map<String, String>>builder();
+
+        for (var entry : ulicAddress) {
+            var simcKey = simcTmpMap.get(entry.createSimcKey());
+            var simcProperties = simcMap.getOrDefault(simcKey, ImmutableMap.of());
+            var properties = ImmutableMap.of(
+                    "województwo", simcProperties.getOrDefault("województwo", ""),
+                    "powiat", simcProperties.getOrDefault(  "powiat", ""),
+                    "gmina", simcProperties.getOrDefault("gmina", ""),
+                    "rodzaj-gminy", simcProperties.getOrDefault("rodzaj-gminy", ""),
+                    "miejscowość", simcProperties.getOrDefault("nazwa", ""),
+                    "miejscowość-bazowa", simcProperties.getOrDefault("miejscowość-bazowa", ""),
+                    "cecha", entry.getType(),
+                    "nazwa-1", entry.getNameOne(),
+                    "nazwa-2", entry.getNameTwo()
+            );
+            resultBuilder.put(entry.createKey("ulic-address"), properties);
+        }
+        return resultBuilder.buildKeepingLast();
+    }
+
 
     private Map<String, Map<String, String>> simcMap(List<SimcCsvRecord> simc,
                                                      Map<String, Map<String, String>> tercAddressMap,
@@ -84,11 +123,12 @@ public class TerytPostalMerger {
                     "rodzaj-gminy", tercProperties.get("rodzaj"),
                     "miejscowość-bazowa", simcMap.get(baseTown).getName(),
                     "nazwa", v.getName(),
-                    "rodzaj-miejscowości", wmRodz.get(String.join(":", "wmRodz", "2013-02-28", v.getTownType()))
+                    "rodzaj-miejscowości", wmRodz.get(String.join(":", "wmRodz", "2013-02-28", v.getTownType())),
+                    "wystepowanie-nazwy-zwyczajowej", v.getHasUsualName()
             );
 
-            if (counter++ % 500 == 0)
-                log.info(counter);
+//            if (counter++ % 500 == 0)
+//                log.info(counter);
 
             resultBuilder.put(k, properties);
 

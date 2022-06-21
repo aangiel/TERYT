@@ -1,7 +1,11 @@
 package io.github.aangiel.teryt.teryt;
 
 import com.opencsv.bean.CsvBindByName;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
+@Getter
+@EqualsAndHashCode
 public class UlicCsvRecord extends CsvRecord {
 
     @CsvBindByName(required = true, column = "﻿WOJ", locale = "pl_PL")
@@ -33,4 +37,24 @@ public class UlicCsvRecord extends CsvRecord {
 
     @CsvBindByName(required = true, column = "STAN_NA", locale = "pl_PL")
     private String stateDate;
+    private String simcKey = null;
+    private String key = null;
+
+    public String createSimcKey() {
+        if (this.simcKey == null)
+            this.simcKey = String.join(":", voivodeshipCode,
+                    countyCode, communityCode, communityType, townSymbol);
+
+        return this.simcKey;
+
+    }
+
+    public String createKey(String catalogName) {
+        if (this.key == null)
+            this.key = String.join(":", catalogName, stateDate, voivodeshipCode,
+                    countyCode, communityCode, communityType, townSymbol, streetSymbol);
+
+        return this.key;
+
+    }
 }

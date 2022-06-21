@@ -136,13 +136,15 @@ public class TerytDownloader {
         var csvPath = Path.of(csvTempDirectory.toString(), fileName);
 
 
-        return new CsvToBeanBuilder<T>(new FileReader(csvPath.toString()))
+        var result =  new CsvToBeanBuilder<T>(new FileReader(csvPath.toString()))
                 .withType(cls)
                 .withSeparator(';')
                 .withIgnoreEmptyLine(true)
                 .withIgnoreLeadingWhiteSpace(true)
                 .build()
                 .parse();
+
+        return result.stream().distinct().toList();
     }
 
 
