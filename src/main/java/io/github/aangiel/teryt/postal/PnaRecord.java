@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Locale;
 import java.util.Map;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -18,6 +19,8 @@ public class PnaRecord {
     private final String street;
     private final String numbers;
     private final String postalCode;
+
+    private String simcPnaKey = null;
 
 //    private static final Pattern townPartPattern = Pattern.compile("^(.+)(?!\\()");
 
@@ -47,5 +50,11 @@ public class PnaRecord {
 
 
         return new PnaRecord(properties, town, townPart);
+    }
+
+    public String getSimcPnaKey() {
+        if (simcPnaKey == null)
+            simcPnaKey = String.join(":", voivodeship, county, community, town).toLowerCase(Locale.ROOT);
+        return simcPnaKey;
     }
 }

@@ -9,6 +9,7 @@ import org.apache.pdfbox.text.TextPosition;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE, staticName = "create")
@@ -20,12 +21,16 @@ final class PnaPage {
     private final AtomicInteger pageCounter = new AtomicInteger();
     private final int pageNumber = pageCounter.getAndIncrement();
 
+    private static final Pattern bierunPattern = Pattern.compile("^((?:Bieruń|Dębogórze|Jelenia Góra|Jelenia Góra \\(Cieplice)|Józefów)\s+([A-Za-zżźćńółęąśŻŹĆĄŚĘŁÓŃ]+.*)$");
+
     Stream<Map<String, String>> stream() {
         return lines.stream();
     }
 
     void addWord(String text, List<TextPosition> textPositions) {
         if (text.isEmpty()) return;
+
+        var matcher = bierunPattern.matcher(text);
 
         if (text.contains(",")) {
             var split = Constants.COLON_PATTERN.split(text);
@@ -34,6 +39,15 @@ final class PnaPage {
             var split = new String[]{
                     "Prymasa Tysiąclecia Kardynała Stefana",
                     "Bogatynia"
+            };
+            addSplitWords(text, textPositions, split);
+        } else if (matcher.matches()) {
+            if ("Józefów nad Wisłą".equals(text)) {
+                lines.addWord(new PnaWord(text, textPositions));
+                return;
+            }
+            var split = new String[] {
+                    matcher.group(1), matcher.group(2)
             };
             addSplitWords(text, textPositions, split);
         } else {

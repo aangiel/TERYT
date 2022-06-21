@@ -2,6 +2,7 @@ package io.github.aangiel.teryt.merger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import io.github.aangiel.teryt.postal.PnaRecord;
 import io.github.aangiel.teryt.postal.PostalCodeParser;
 import io.github.aangiel.teryt.teryt.*;
 import io.github.aangiel.teryt.ws.ITerytWs1;
@@ -64,13 +65,14 @@ public class TerytPostalMerger {
                 .distinct()
                 .map(
                         k -> {
-                            var key = Stream.of(
+                            String key = Stream.of(
                                             k.getValue().get("województwo"),
                                             k.getValue().get("powiat"),
                                             k.getValue().get("gmina"),
                                             k.getValue().get("nazwa")
                                     ).filter(Objects::nonNull)
                                     .filter(Predicate.not(String::isEmpty))
+                                    .map(String::toLowerCase)
                                     .collect(Collectors.joining(":"));
                             return Map.entry(key, k.getKey());
                         }
@@ -79,13 +81,27 @@ public class TerytPostalMerger {
 
         var parsedPdf = PostalCodeParser.create(postalCodesFile).parse();
 
-//        var pnaMap = pnaMapSimc()
+        var pnaMap = pnaMapSimc(simcPna, simcMap, parsedPdf);
 
         return null;
     }
 
-    private void pnaMapSimc() {
+    private Map<String, Map<String, String>> pnaMapSimc(Map<String, String> simcPna, Map<String, Map<String, String>> simcMap, List<PnaRecord> parsedPdf) {
 
+        var result = ImmutableMap.<String, Map<String, String>>builder();
+
+        for (var pna : parsedPdf) {
+            var simcKey = simcPna.get(pna.getSimcPnaKey());
+            var properties = simcMap.get(simcKey);
+            var newProperties = ImmutableMap.<String, String>builder();
+            newProperties.putAll(properties)
+                    .put("kod-pocztowy", pna.getPostalCode())
+                    .put("w-nawiasach", pna.getTownPart());
+
+            result.put(String.join(":", simcKey, pna.getPostalCode()), newProperties.build());
+        }
+
+        return result.build();
     }
 
     private Map<String, Map<String, String>> ulicMap(List<SimcCsvRecord> simcAddress,
@@ -149,7 +165,7 @@ public class TerytPostalMerger {
 
             var properties = ImmutableMap.of(
                     "województwo", tercProperties.get("województwo"),
-                    "powiat", tercProperties.getOrDefault("powiat", ""),
+                    "powiat", tercProperties.getOrDefault("powiat", v.getName()),
                     "gmina", tercProperties.get("nazwa"),
                     "rodzaj-gminy", tercProperties.get("rodzaj"),
                     "miejscowość-bazowa", simcMap.get(baseTown).getName(),
