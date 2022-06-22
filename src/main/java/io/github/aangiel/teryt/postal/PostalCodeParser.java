@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Log4j
@@ -40,10 +41,28 @@ public final class PostalCodeParser {
                     .min(Comparator.comparingDouble(Map.Entry::getKey))
                     .orElseThrow(() -> new IllegalStateException("No letters found"))
                     .getValue().stream()
+                    .sorted(Comparator.comparingDouble(TextPosition::getYDirAdj))
                     .toList();
 
             pageWithLinesBuilder.put(pageWithLetter.getKey(), firstCharactersInLines);
         }
+
+        var pagesWithLinesY = pageWithLinesBuilder.build();
+
+        var result = ImmutableMap.<Integer, Map<Long, List<TextPosition>>>builder();
+
+        for (var i = 1; i < pagesWithLinesY.entrySet().size(); i++) {
+            var y1 = Objects.requireNonNull(pagesWithLinesY.get(i)).get(0).getYDirAdj();
+            var y2 = Objects.requireNonNull(pagesWithLinesY.get(i + 1)).get(0).getYDirAdj();
+
+            List<TextPosition> textPositions = pagesWithLetters.values().stream()
+                    .flatMap(List::stream)
+                    .map(OneCharacter::character)
+                    .filter(c -> c.getYDirAdj() >= y1 && c.getYDirAdj() < y2)
+                    .toList();
+
+        }
+
         return null;
     }
 }
