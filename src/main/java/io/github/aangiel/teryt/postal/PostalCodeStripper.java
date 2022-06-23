@@ -74,7 +74,7 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (text.startsWith("© Copyright")) {
-      headerY = textPositions.get(0).getYDirAdj();
+      footerY = textPositions.get(0).getYDirAdj();
     }
 
     if (Math.abs(textPositions.get(0).getYDirAdj() - footerY) < 2.0f) {
