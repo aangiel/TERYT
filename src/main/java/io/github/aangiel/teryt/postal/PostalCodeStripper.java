@@ -69,7 +69,7 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (Math.abs(textPositions.get(0).getYDirAdj() - headerY) < 2.0f) {
-      pages.put(getCurrentPageNo(), "header", text, textPositions);
+      pages.put(currentPage, "header", text, textPositions);
       return;
     }
 
@@ -78,7 +78,7 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (Math.abs(textPositions.get(0).getYDirAdj() - footerY) < 2.0f) {
-      pages.put(getCurrentPageNo(), "footer", text, textPositions);
+      pages.put(currentPage, "footer", text, textPositions);
       return;
     }
 
@@ -90,29 +90,5 @@ final class PostalCodeStripper extends PDFTextStripper {
     if (lineCounter > 0) {
       pages.put(currentPage, lineCounter, text, textPositions);
     }
-
-    //        //        for (var textPosition : textPositions) {
-    //        if (Math.abs(textPositions.get(0).getYDirAdj() - lastLineY) > 2.0f) {
-    //            lastLineY = textPositions.get(0).getYDirAdj();
-    //            lineCounter++;
-    //            pages.put(currentPage, lineCounter, "startY", textPositions);
-    //        }
-    //
-    //        if (Math.abs(textPositions.get(0).getXDirAdj() - lastLineX) > 2.0f) {
-    //            lastLineX = textPositions.get(0).getXDirAdj();
-    //        }
-    //
-    //
-    //
-    //
-    //        pages.put(
-    //                currentPage,
-    ////                getCurrentPageNo(),
-    ////                Math.round(lastLineY),
-    //                lineCounter,
-    //                Math.round(textPositions.get(0).getXDirAdj()),
-    //                text,
-    //                textPositions);
-    //        }
   }
 }
