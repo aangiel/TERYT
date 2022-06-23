@@ -10,6 +10,7 @@ import org.apache.pdfbox.text.TextPosition;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 
 @Log4j
@@ -78,17 +79,16 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (Math.abs(textPositions.get(0).getYDirAdj() - footerY) < 2.0f) {
-      pages.put(currentPage, "footer", text, textPositions);
       return;
     }
 
     if (text.matches(POSTAL_CODE_PATTERN)) {
-      pages.put(currentPage, ++lineCounter, text, textPositions);
-      return;
+      pages.put(currentPage, ++lineCounter, new LinkedList<>());
     }
 
-    if (lineCounter > 0) {
-      pages.put(currentPage, lineCounter, text, textPositions);
+    if (lineCounter == 0) {
+      return;
     }
+    pages.get(currentPage, lineCounter).addAll(textPositions);
   }
 }

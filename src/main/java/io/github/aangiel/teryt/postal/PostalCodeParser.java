@@ -31,31 +31,6 @@ public final class PostalCodeParser {
 
     var result = MultiKeyMap.<String, List<TextPosition>>multiKeyMap(new LinkedMap<>());
 
-    //        pagesWithLetters.entrySet().stream()
-    //                .map()
-
-//    var headers =
-//        pagesWithLetters.entrySet().stream()
-//            .collect(
-//                Collectors.groupingBy(
-//                    e -> new MultiKey<>((int) e.getKey().getKey(0), (int) e.getKey().getKey(1)),
-//                    LinkedMap::new,
-//                    Collectors.toList()))
-//            .entrySet()
-//            .stream()
-//            .filter(
-//                e ->
-//                    e.getValue().stream()
-//                            .filter(t -> t.getKey().getKey(3).equals("PNA"))
-//                            .toList()
-//                            .size()
-//                        > 0)
-//                .flatMap(e -> Map.Entry)
-//            .flatMap(e -> e.getValue().stream())
-//            .map(e -> new MultiKey(e.getKey().getKey(0), e.getKey().getKey(3), e.getKey().getKey(2)))
-//                .map(e -> )
-//            .toList();
-
     return null;
   }
 }

@@ -15,22 +15,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Log4j
 class PostalCodeParserTest {
 
-    @Test
-    void parse() throws IOException {
+  @Test
+  void parse() throws IOException {
 
-        File file = Path.of("src", "test", "resources", "spispna.pdf").toFile();
+    File file = Path.of("src", "test", "resources", "spispna.pdf").toFile();
 
-        var properties = PostalCodeParser.create(file).parse();
+    var properties = PostalCodeParser.create(file).parse();
 
-        var postalCodesFile = Path.of("src", "test", "resources", "expectedPostalCodes.json").toFile();
-        var postalCodes = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(properties);
+    var postalCodesFile = Path.of("src", "test", "resources", "expectedPostalCodes.json").toFile();
+    var postalCodes =
+        new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(properties);
 
-        FileUtils.writeStringToFile(Path.of("target", "tmp", "expectedPostalCodes.json").toFile(), postalCodes);
+    FileUtils.writeStringToFile(
+        Path.of("target", "tmp", "expectedPostalCodes.json").toFile(), postalCodes);
 
-        var expected = FileUtils.readFileToString(postalCodesFile);
+    var expected = FileUtils.readFileToString(postalCodesFile);
 
-        assertEquals(expected, postalCodes);
-
-
-    }
+    assertEquals(expected, postalCodes);
+  }
 }
