@@ -18,6 +18,8 @@ final class PostalCodeStripper extends PDFTextStripper {
     private static float lastLineY = 0.0f;
     private static float lastLineX = 0.0f;
     private static float headersY = 0.0f;
+    private static int lineCounter = 0;
+    private static int currentPage = 0;
     private final File pdfToStrip;
     private final MultiKeyMap<Object, List<TextPosition>> pages =
             MultiKeyMap.multiKeyMap(new LinkedMap<>());
@@ -51,13 +53,20 @@ final class PostalCodeStripper extends PDFTextStripper {
     @Override
     protected void writeString(String text, List<TextPosition> textPositions) {
 
-        if (getCurrentPageNo() >= 6 || getCurrentPageNo() <= 3) {
+        if (getCurrentPageNo() >= 6 /*|| getCurrentPageNo() <= 3*/) {
             return;
+        }
+
+        if (getCurrentPageNo() > currentPage) {
+            currentPage++;
+            lineCounter = 0;
         }
 
         //        for (var textPosition : textPositions) {
         if (Math.abs(textPositions.get(0).getYDirAdj() - lastLineY) > 2.0f) {
             lastLineY = textPositions.get(0).getYDirAdj();
+            lineCounter++;
+            pages.put(currentPage, lineCounter, "startY", textPositions);
         }
 
         if (Math.abs(textPositions.get(0).getXDirAdj() - lastLineX) > 2.0f) {
@@ -74,8 +83,10 @@ final class PostalCodeStripper extends PDFTextStripper {
         }
 
         pages.put(
-                getCurrentPageNo(),
-                Math.round(lastLineY),
+                currentPage,
+//                getCurrentPageNo(),
+//                Math.round(lastLineY),
+                lineCounter,
                 Math.round(textPositions.get(0).getXDirAdj()),
                 text,
                 textPositions);
