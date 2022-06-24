@@ -14,6 +14,7 @@ import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
@@ -85,6 +86,9 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (text.matches(POSTAL_CODE_PATTERN)) {
+      if (lineCounter > 0) {
+        reorganizeCells();
+      }
       lineCounter++;
       for (var i = 1; i <= 7; i++) {
         pages.put(currentPage, lineCounter, i, new LinkedList<>());
@@ -97,6 +101,40 @@ final class PostalCodeStripper extends PDFTextStripper {
 
     for (var textPosition : textPositions) {
       pages.get(currentPage, lineCounter, getCellNumber(textPosition)).add(textPosition);
+    }
+  }
+
+  private void reorganizeCells() {
+    for (var i = 3; i < cellCounter; i++) {
+      var cell = pages.get(currentPage, lineCounter, i);
+      var filtered = Optional.<String>empty();
+      if (i == 3) {
+        filtered =
+            cell.stream().map(TextPosition::getUnicode).filter(e -> e.equals(")")).findFirst();
+        if (filtered.isEmpty()) {
+          filtered = cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("\\W")).findFirst();
+          if (filtered.isPresent()) {
+            filtered = Optional.empty();
+          }
+        }
+      }
+      if (i == 4) {
+        filtered =
+            cell.stream()
+                .map(TextPosition::getUnicode)
+                .filter(e -> e.matches("\\d"))
+                .findFirst();
+
+        if (filtered.isPresent()) {
+          filtered = Optional.empty();
+        } else {
+          filtered = Optional.of("x");
+        }
+      }
+      if (filtered.isPresent()) {
+        pages.get(currentPage, lineCounter, i - 1).addAll(cell);
+        pages.put(currentPage, lineCounter, i, new LinkedList<>());
+      }
     }
   }
 
@@ -114,7 +152,8 @@ final class PostalCodeStripper extends PDFTextStripper {
               this.getCurrentPage().getMediaBox().getWidth()));
     }
     for (var i = 0; i < headerRanges.size(); i++) {
-      if (i < cellCounter - 2 && Math.abs(headerRanges.get(i + 1).getMinimum() - textPosition.getXDirAdj()) < 2.0f) {
+      if (i < cellCounter - 2
+          && Math.abs(headerRanges.get(i + 1).getMinimum() - textPosition.getXDirAdj()) < 2.0f) {
         return i + 2;
       } else if (headerRanges.get(i).getMinimum() <= textPosition.getXDirAdj()
           && headerRanges.get(i).getMaximum() > textPosition.getXDirAdj()) {
