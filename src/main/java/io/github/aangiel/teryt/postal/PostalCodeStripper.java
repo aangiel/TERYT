@@ -3,6 +3,7 @@ package io.github.aangiel.teryt.postal;
 import lombok.extern.log4j.Log4j;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
+import org.apache.commons.lang3.Range;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
@@ -23,6 +25,9 @@ final class PostalCodeStripper extends PDFTextStripper {
   private static float footerY = 0.0f;
   private static int lineCounter = 0;
   private static int currentPage = 0;
+  private static List<Range<Float>> headerRanges;
+
+  private static int cellCounter = 1;
   private final File pdfToStrip;
   private final MultiKeyMap<Object, List<TextPosition>> pages =
       MultiKeyMap.multiKeyMap(new LinkedMap<>());
@@ -56,13 +61,11 @@ final class PostalCodeStripper extends PDFTextStripper {
   @Override
   protected void writeString(String text, List<TextPosition> textPositions) {
 
-    if (getCurrentPageNo() >= 6 || getCurrentPageNo() < 3) {
-      return;
-    }
-
     if (getCurrentPageNo() > currentPage) {
       currentPage++;
       lineCounter = 0;
+      headerRanges = null;
+      cellCounter = 1;
     }
 
     if (text.equals("PNA")) {
@@ -70,8 +73,7 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (Math.abs(textPositions.get(0).getYDirAdj() - headerY) < 2.0f) {
-      pages.put(currentPage, "header", text, textPositions);
-      return;
+      pages.put(currentPage, 0, cellCounter++, textPositions);
     }
 
     if (text.startsWith("© Copyright")) {
@@ -83,12 +85,42 @@ final class PostalCodeStripper extends PDFTextStripper {
     }
 
     if (text.matches(POSTAL_CODE_PATTERN)) {
-      pages.put(currentPage, ++lineCounter, new LinkedList<>());
+      lineCounter++;
+      for (var i = 1; i <= 7; i++) {
+        pages.put(currentPage, lineCounter, i, new LinkedList<>());
+      }
     }
 
     if (lineCounter == 0) {
       return;
     }
-    pages.get(currentPage, lineCounter).addAll(textPositions);
+
+    for (var textPosition : textPositions) {
+      pages.get(currentPage, lineCounter, getCellNumber(textPosition)).add(textPosition);
+    }
+  }
+
+  private int getCellNumber(TextPosition textPosition) {
+    if (headerRanges == null) {
+      headerRanges = new LinkedList<>();
+      for (var i = 1; i < 7; i++) {
+        var left = pages.get(currentPage, 0, i).get(0).getXDirAdj();
+        var right = pages.get(currentPage, 0, i + 1).get(0).getXDirAdj();
+        headerRanges.add(Range.between(left, right));
+      }
+      headerRanges.add(
+          Range.between(
+              pages.get(currentPage, 0, 7).get(0).getXDirAdj(),
+              this.getCurrentPage().getMediaBox().getWidth()));
+    }
+    for (var i = 0; i < headerRanges.size(); i++) {
+      if (i < 6 && Math.abs(headerRanges.get(i + 1).getMinimum() - textPosition.getXDirAdj()) < 2.0f) {
+        return i + 2;
+      } else if (headerRanges.get(i).getMinimum() <= textPosition.getXDirAdj()
+          && headerRanges.get(i).getMaximum() > textPosition.getXDirAdj()) {
+        return i + 1;
+      }
+    }
+    throw new NoSuchElementException();
   }
 }
