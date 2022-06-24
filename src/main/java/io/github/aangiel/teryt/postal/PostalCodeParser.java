@@ -1,8 +1,6 @@
 package io.github.aangiel.teryt.postal;
 
-import com.google.common.collect.ImmutableMap;
 import lombok.extern.log4j.Log4j;
-import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.text.TextPosition;
@@ -28,17 +26,13 @@ public final class PostalCodeParser {
 
   public List<PnaRecord> parse() throws IOException {
 
-    var pagesWithLetters = this.postalCodeStripper.strip();
+    var result = this.postalCodeStripper.strip();
 
-    var pageWithLinesBuilder = ImmutableMap.<Integer, List<TextPosition>>builder();
-
-    var result = MultiKeyMap.<String, List<TextPosition>>multiKeyMap(new LinkedMap<>());
-
-    var printed = print(pagesWithLetters);
+    var printed = print(postalCodeStripper.getPages());
 
     FileUtils.writeStringToFile(
         Path.of("target", "tmp", "postalCodesFormatted.txt").toFile(), printed);
-    return null;
+    return result;
   }
 
   private String print(MultiKeyMap<Object, List<TextPosition>> pagesWithLetters) {

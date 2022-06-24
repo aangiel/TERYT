@@ -1,5 +1,6 @@
 package io.github.aangiel.teryt.postal;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
@@ -27,15 +29,19 @@ final class PostalCodeStripper extends PDFTextStripper {
 
   private static int cellCounter = 1;
   private final File pdfToStrip;
+
+  @Getter
   private final MultiKeyMap<Object, List<TextPosition>> pages =
       MultiKeyMap.multiKeyMap(new LinkedMap<>());
+
+  private final List<PnaRecord> result = new LinkedList<>();
 
   PostalCodeStripper(File pdfToStrip) throws IOException {
     super();
     this.pdfToStrip = pdfToStrip;
   }
 
-  MultiKeyMap<Object, List<TextPosition>> strip() {
+  List<PnaRecord> strip() {
     try (PDDocument document = PDDocument.load(pdfToStrip)) {
       super.setSortByPosition(true);
       super.writeText(document, Writer.nullWriter());
@@ -43,7 +49,7 @@ final class PostalCodeStripper extends PDFTextStripper {
       e.printStackTrace();
       log.info(e.getMessage());
     }
-    return pages;
+    return result;
   }
 
   @Override
@@ -139,6 +145,23 @@ final class PostalCodeStripper extends PDFTextStripper {
         pages.put(currentPage, lineCounter, i, new LinkedList<>());
       }
     }
+
+    if (lineCounter == 0) {
+      return;
+    }
+
+    var properties = new LinkedHashMap<String, String>();
+
+    properties.put("PNA", pages.get(currentPage, lineCounter, 1).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Miejscowość", pages.get(currentPage, lineCounter, 2).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Ulica", pages.get(currentPage, lineCounter, 3).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Numery", pages.get(currentPage, lineCounter, 4).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Gmina", pages.get(currentPage, lineCounter, 5).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Powiat", pages.get(currentPage, lineCounter, 6).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put("Województwo", pages.get(currentPage, lineCounter, 7).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+
+    var pnaRecord = PnaRecord.create(properties);
+    result.add(pnaRecord);
   }
 
   private int getCellNumber(TextPosition textPosition) {
