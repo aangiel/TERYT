@@ -11,10 +11,7 @@ import org.apache.pdfbox.text.TextPosition;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
@@ -112,7 +109,8 @@ final class PostalCodeStripper extends PDFTextStripper {
         filtered =
             cell.stream().map(TextPosition::getUnicode).filter(e -> e.equals(")")).findFirst();
         if (filtered.isEmpty()) {
-          filtered = cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("\\W")).findFirst();
+          filtered =
+              cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("\\W")).findFirst();
           if (filtered.isPresent()) {
             filtered = Optional.empty();
           }
@@ -120,10 +118,7 @@ final class PostalCodeStripper extends PDFTextStripper {
       }
       if (i == 4) {
         filtered =
-            cell.stream()
-                .map(TextPosition::getUnicode)
-                .filter(e -> e.matches("\\d"))
-                .findFirst();
+            cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("\\d")).findFirst();
 
         if (filtered.isPresent()) {
           filtered = Optional.empty();
@@ -132,7 +127,12 @@ final class PostalCodeStripper extends PDFTextStripper {
         }
       }
       if (filtered.isPresent()) {
-        pages.get(currentPage, lineCounter, i - 1).addAll(cell);
+        var previousCell = pages.get(currentPage, lineCounter, i - 1);
+        previousCell.addAll(cell);
+        previousCell.sort(
+            Comparator.comparingDouble(TextPosition::getYDirAdj)
+                .thenComparing(TextPosition::getXDirAdj));
+
         pages.put(currentPage, lineCounter, i, new LinkedList<>());
       }
     }
