@@ -66,6 +66,7 @@ public final class PostalCodeParser {
     return switch (cellNumber) {
       case 1 -> "%1$-10s";
       case 2, 3 -> "%1$-50s";
+      case 4 -> "%1$-60s";
       default -> "%1$-35s";
     };
   }

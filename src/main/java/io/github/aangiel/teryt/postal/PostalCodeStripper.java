@@ -111,9 +111,11 @@ final class PostalCodeStripper extends PDFTextStripper {
             cell.stream().map(TextPosition::getUnicode).filter(e -> e.equals(")")).findFirst();
         if (filtered.isEmpty()) {
           filtered =
-              cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("\\W")).findFirst();
+              cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("[A-ZĄĆĘŁŃÓŚŹŻ]")).findFirst();
           if (filtered.isPresent()) {
             filtered = Optional.empty();
+          } else {
+            filtered = Optional.of("x");
           }
         }
       }
