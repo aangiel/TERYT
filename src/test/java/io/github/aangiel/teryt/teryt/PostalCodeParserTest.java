@@ -18,7 +18,7 @@ class PostalCodeParserTest {
   @Test
   void parse() throws IOException {
 
-    File file = Path.of("src", "test", "resources", "spispna-1-10.pdf").toFile();
+    File file = Path.of("src", "test", "resources", "spispna.pdf").toFile();
 
     var properties = PostalCodeParser.create(file).parse();
 

@@ -103,18 +103,18 @@ final class PostalCodeStripper extends PDFTextStripper {
   private int getCellNumber(TextPosition textPosition) {
     if (headerRanges == null) {
       headerRanges = new LinkedList<>();
-      for (var i = 1; i < 7; i++) {
+      for (var i = 1; i < cellCounter - 1; i++) {
         var left = pages.get(currentPage, 0, i).get(0).getXDirAdj();
         var right = pages.get(currentPage, 0, i + 1).get(0).getXDirAdj();
         headerRanges.add(Range.between(left, right));
       }
       headerRanges.add(
           Range.between(
-              pages.get(currentPage, 0, 7).get(0).getXDirAdj(),
+              pages.get(currentPage, 0, cellCounter - 1).get(0).getXDirAdj(),
               this.getCurrentPage().getMediaBox().getWidth()));
     }
     for (var i = 0; i < headerRanges.size(); i++) {
-      if (i < 6 && Math.abs(headerRanges.get(i + 1).getMinimum() - textPosition.getXDirAdj()) < 2.0f) {
+      if (i < cellCounter - 2 && Math.abs(headerRanges.get(i + 1).getMinimum() - textPosition.getXDirAdj()) < 2.0f) {
         return i + 2;
       } else if (headerRanges.get(i).getMinimum() <= textPosition.getXDirAdj()
           && headerRanges.get(i).getMaximum() > textPosition.getXDirAdj()) {
