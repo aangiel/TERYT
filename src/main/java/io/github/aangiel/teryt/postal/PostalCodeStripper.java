@@ -65,6 +65,10 @@ final class PostalCodeStripper extends PDFTextStripper {
   @Override
   protected void writeString(String text, List<TextPosition> textPositions) {
 
+    if (currentPage > 1648) {
+      return;
+    }
+
     if (getCurrentPageNo() > currentPage) {
       reorganizeCells();
       currentPage++;
@@ -113,16 +117,31 @@ final class PostalCodeStripper extends PDFTextStripper {
       var cell = pages.get(currentPage, lineCounter, i);
       var filtered = Optional.<String>empty();
       if (i == 3) {
-        filtered =
-            cell.stream().map(TextPosition::getUnicode).filter(e -> e.equals(")")).findFirst();
-        if (filtered.isEmpty()) {
-          filtered =
-              cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("[A-ZĄĆĘŁŃÓŚŹŻ]")).findFirst();
-          if (filtered.isPresent() && !pages.get(currentPage, lineCounter, i - 1).get(pages.get(currentPage, lineCounter, i - 1).size() - 1).getUnicode().equals("-")) {
-            filtered = Optional.empty();
-          } else {
-            filtered = Optional.of("x");
-          }
+        var containsClosingParenthesis =
+            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.equals(")"));
+        var containsUpperCaseLetter =
+            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.matches("[A-ZĄĆĘŁŃÓŚŹŻ]"));
+        var previousCellEndsWithDash =
+            pages
+                .get(currentPage, lineCounter, i - 1)
+                .get(pages.get(currentPage, lineCounter, i - 1).size() - 1)
+                .getUnicode()
+                .equals("-");
+        var containsDigit =
+            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.matches("\\d"));
+
+        var containsOnlyLowerCase = cell.stream().map(TextPosition::getUnicode).allMatch(e -> e.matches("[a-ząćęłńóśźż]"));
+
+        if (containsClosingParenthesis) {
+          filtered = Optional.of("x");
+        } else if (containsUpperCaseLetter && previousCellEndsWithDash) {
+          filtered = Optional.of("x");
+        } else if (containsDigit) {
+          filtered = Optional.empty();
+        } else if (containsOnlyLowerCase) {
+          filtered = Optional.of("x");
+        } else {
+          filtered = Optional.empty();
         }
       }
       if (i == 4) {
@@ -152,13 +171,41 @@ final class PostalCodeStripper extends PDFTextStripper {
 
     var properties = new LinkedHashMap<String, String>();
 
-    properties.put("PNA", pages.get(currentPage, lineCounter, 1).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Miejscowość", pages.get(currentPage, lineCounter, 2).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Ulica", pages.get(currentPage, lineCounter, 3).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Numery", pages.get(currentPage, lineCounter, 4).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Gmina", pages.get(currentPage, lineCounter, 5).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Powiat", pages.get(currentPage, lineCounter, 6).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
-    properties.put("Województwo", pages.get(currentPage, lineCounter, 7).stream().map(TextPosition::getUnicode).collect(Collectors.joining()));
+    properties.put(
+        "PNA",
+        pages.get(currentPage, lineCounter, 1).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Miejscowość",
+        pages.get(currentPage, lineCounter, 2).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Ulica",
+        pages.get(currentPage, lineCounter, 3).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Numery",
+        pages.get(currentPage, lineCounter, 4).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Gmina",
+        pages.get(currentPage, lineCounter, 5).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Powiat",
+        pages.get(currentPage, lineCounter, 6).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
+    properties.put(
+        "Województwo",
+        pages.get(currentPage, lineCounter, 7).stream()
+            .map(TextPosition::getUnicode)
+            .collect(Collectors.joining()));
 
     var pnaRecord = PnaRecord.create(properties);
     result.add(pnaRecord);
