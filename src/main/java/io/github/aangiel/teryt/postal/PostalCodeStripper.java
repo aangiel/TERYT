@@ -118,7 +118,7 @@ final class PostalCodeStripper extends PDFTextStripper {
         if (filtered.isEmpty()) {
           filtered =
               cell.stream().map(TextPosition::getUnicode).filter(e -> e.matches("[A-ZĄĆĘŁŃÓŚŹŻ]")).findFirst();
-          if (filtered.isPresent()) {
+          if (filtered.isPresent() && !pages.get(currentPage, lineCounter, i - 1).get(pages.get(currentPage, lineCounter, i - 1).size() - 1).getUnicode().equals("-")) {
             filtered = Optional.empty();
           } else {
             filtered = Optional.of("x");
