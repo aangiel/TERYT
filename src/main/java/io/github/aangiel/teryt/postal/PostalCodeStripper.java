@@ -60,6 +60,7 @@ final class PostalCodeStripper extends PDFTextStripper {
   protected void writeString(String text, List<TextPosition> textPositions) {
 
     if (getCurrentPageNo() > currentPage) {
+      reorganizeCells();
       currentPage++;
       lineCounter = 0;
       headerRanges = null;
