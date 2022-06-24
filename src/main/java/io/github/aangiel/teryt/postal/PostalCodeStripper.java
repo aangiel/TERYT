@@ -83,7 +83,7 @@ final class PostalCodeStripper extends PDFTextStripper {
       return;
     }
 
-    if (text.matches(POSTAL_CODE_PATTERN)) {
+    if (text.matches(POSTAL_CODE_PATTERN) && getCellNumber(textPositions.get(0)) == 1) {
       if (lineCounter > 0) {
         reorganizeCells();
       }
