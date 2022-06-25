@@ -13,14 +13,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
 
   private static final String POSTAL_CODE_PATTERN = "^\\d{2}-\\d{3}$";
-  private static float lastLineY = 0.0f;
-  private static float lastLineX = 0.0f;
+  private static final float lastLineY = 0.0f;
+  private static final float lastLineX = 0.0f;
   private static float headerY = 0.0f;
   private static float footerY = 0.0f;
   private static int lineCounter = 0;
@@ -117,31 +118,25 @@ final class PostalCodeStripper extends PDFTextStripper {
       var cell = pages.get(currentPage, lineCounter, i);
       var filtered = Optional.<String>empty();
       if (i == 3) {
-        var containsClosingParenthesis =
-            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.equals(")"));
-        var containsUpperCaseLetter =
-            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.matches("[A-ZĄĆĘŁŃÓŚŹŻ]"));
+
         var previousCellEndsWithDash =
-            pages
-                .get(currentPage, lineCounter, i - 1)
-                .get(pages.get(currentPage, lineCounter, i - 1).size() - 1)
-                .getUnicode()
-                .equals("-");
-        var containsDigit =
-            cell.stream().map(TextPosition::getUnicode).anyMatch(e -> e.matches("\\d"));
+                pages
+                        .get(currentPage, lineCounter, i - 1)
+                        .get(pages.get(currentPage, lineCounter, i - 1).size() - 1)
+                        .getUnicode()
+                        .equals("-");
 
-        var containsOnlyLowerCase = cell.stream().map(TextPosition::getUnicode).allMatch(e -> e.matches("[a-ząćęłńóśźż]"));
+        var streetPattern =
+            Pattern.compile(
+                "^(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\")$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
 
-        if (containsClosingParenthesis) {
-          filtered = Optional.of("x");
-        } else if (containsUpperCaseLetter && previousCellEndsWithDash) {
-          filtered = Optional.of("x");
-        } else if (containsDigit) {
+        var cellString = cell.stream().map(TextPosition::getUnicode).collect(Collectors.joining());
+
+        var matcher = streetPattern.matcher(cellString);
+        if (matcher.matches() && !previousCellEndsWithDash) {
           filtered = Optional.empty();
-        } else if (containsOnlyLowerCase) {
-          filtered = Optional.of("x");
         } else {
-          filtered = Optional.empty();
+          filtered = Optional.of(cellString);
         }
       }
       if (i == 4) {
