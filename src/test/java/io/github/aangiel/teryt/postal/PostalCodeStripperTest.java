@@ -18,7 +18,8 @@ class PostalCodeStripperTest {
             "rynek Rynek im. Jana Pawła II",
             "700-lecia",
             "rotmistrza Witolda Pileckiego",
-            "pl. Konstytucji");
+            "pl. Konstytucji",
+            "Bohaterów z Kopalni „Wujek”");
 
     var shouldNotMatch = ImmutableList.of("ska", "olonia)", "a-Kolonia");
 

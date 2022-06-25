@@ -19,8 +19,9 @@ import java.util.stream.Collectors;
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
 
-  public static final Pattern STREET_PATTERN = Pattern.compile(
-          "^(?![a-ząćęłńóśźż]+-)(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\"|[A-Z])$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
+  public static final Pattern STREET_PATTERN =
+      Pattern.compile(
+          "^(?![a-ząćęłńóśźż]+-)(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\"|”|[A-Z])$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
   private static final String POSTAL_CODE_PATTERN = "^\\d{2}-\\d{3}$";
   private static float headerY = 0.0f;
   private static float footerY = 0.0f;
@@ -40,6 +41,10 @@ final class PostalCodeStripper extends PDFTextStripper {
   PostalCodeStripper(File pdfToStrip) throws IOException {
     super();
     this.pdfToStrip = pdfToStrip;
+  }
+
+  static boolean streetMatch(String toMatch) {
+    return STREET_PATTERN.matcher(toMatch).matches();
   }
 
   List<PnaRecord> strip() {
@@ -120,11 +125,11 @@ final class PostalCodeStripper extends PDFTextStripper {
       if (i == 3) {
 
         var previousCellEndsWithDash =
-                pages
-                        .get(currentPage, lineCounter, i - 1)
-                        .get(pages.get(currentPage, lineCounter, i - 1).size() - 1)
-                        .getUnicode()
-                        .equals("-");
+            pages
+                .get(currentPage, lineCounter, i - 1)
+                .get(pages.get(currentPage, lineCounter, i - 1).size() - 1)
+                .getUnicode()
+                .equals("-");
 
         var cellString = cell.stream().map(TextPosition::getUnicode).collect(Collectors.joining());
 
@@ -200,10 +205,6 @@ final class PostalCodeStripper extends PDFTextStripper {
 
     var pnaRecord = PnaRecord.create(properties);
     result.add(pnaRecord);
-  }
-
-  static boolean streetMatch(String toMatch) {
-    return STREET_PATTERN.matcher(toMatch).matches();
   }
 
   private int getCellNumber(TextPosition textPosition) {

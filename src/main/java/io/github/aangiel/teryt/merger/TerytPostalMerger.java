@@ -37,13 +37,13 @@ public class TerytPostalMerger {
         var simcDate = terytClient.pobierzDateAktualnegoKatSimc();
         var ulicDate = terytClient.pobierzDateAktualnegoKatUlic();
         var tercAddress = TerytDownloader
-                .getCsvLines(TercCsvRecord.class, terytClient.pobierzKatalogTERCAdr(tercDate));
+                .getCsvLines(TercCsvRecord.class, terytClient.pobierzKatalogTERC(tercDate));
 
         var simcAddress = TerytDownloader
-                .getCsvLines(SimcCsvRecord.class, terytClient.pobierzKatalogSIMCAdr(simcDate));
+                .getCsvLines(SimcCsvRecord.class, terytClient.pobierzKatalogSIMC(simcDate));
 
         var ulicAddress = TerytDownloader
-                .getCsvLines(UlicCsvRecord.class, terytClient.pobierzKatalogULICAdr(ulicDate));
+                .getCsvLines(UlicCsvRecord.class, terytClient.pobierzKatalogULIC(ulicDate));
 
         var wmRodz = TerytDownloader
                 .getCsvLines(WmRodzCsvRecord.class, terytClient.pobierzKatalogWMRODZ(simcDate));
@@ -69,6 +69,7 @@ public class TerytPostalMerger {
                                             k.getValue().get("województwo"),
                                             k.getValue().get("powiat"),
                                             k.getValue().get("gmina"),
+                                            k.getValue().get("miejscowość-bazowa").equals(k.getValue().get("nazwa")) ? "" : k.getValue().get("miejscowość-bazowa"),
                                             k.getValue().get("nazwa")
                                     ).filter(Objects::nonNull)
                                     .filter(Predicate.not(String::isEmpty))
@@ -90,7 +91,9 @@ public class TerytPostalMerger {
 
         var result = ImmutableMap.<String, Map<String, String>>builder();
 
-        for (var pna : parsedPdf) {
+        var filtered = parsedPdf.stream().filter(e -> e.getStreet().isEmpty()).toList();
+    var counter = 0;
+        for (var pna : filtered) {
             var simcKey = simcPna.get(pna.getSimcPnaKey());
             var properties = simcMap.get(simcKey);
             var newProperties = ImmutableMap.<String, String>builder();
@@ -99,9 +102,13 @@ public class TerytPostalMerger {
                     .put("w-nawiasach", pna.getTownPart());
 
             result.put(String.join(":", simcKey, pna.getPostalCode()), newProperties.build());
+
+            if (counter++ % 100 == 0) {
+                log.info("Processed: " + counter);
+            }
         }
 
-        return result.buildKeepingLast();
+        return result.build();//.buildKeepingLast();
     }
 
     private Map<String, Map<String, String>> ulicMap(List<SimcCsvRecord> simcAddress,
@@ -210,7 +217,11 @@ public class TerytPostalMerger {
             properties.put("nazwa", v.getName());
             properties.put("rodzaj", v.getExtraName());
             while (parent != null) {
-                properties.put(parent.getExtraName(), parent.getName());
+                var extraName = parent.getExtraName();
+                if (extraName.contains("powiat")) {
+                    extraName = "powiat";
+                }
+                properties.put(extraName, parent.getName());
                 parent = tercAddressMap.get(parent.retrieveParentKey("terc-address"));
             }
             result.put(entry.getKey(), properties.build());
