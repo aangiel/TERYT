@@ -83,7 +83,7 @@ public class TerytPostalMerger {
 
         var pnaMap = pnaMapSimc(simcPna, simcMap, parsedPdf);
 
-        return null;
+        return pnaMap;
     }
 
     private Map<String, Map<String, String>> pnaMapSimc(Map<String, String> simcPna, Map<String, Map<String, String>> simcMap, List<PnaRecord> parsedPdf) {
@@ -101,7 +101,7 @@ public class TerytPostalMerger {
             result.put(String.join(":", simcKey, pna.getPostalCode()), newProperties.build());
         }
 
-        return result.build();
+        return result.buildKeepingLast();
     }
 
     private Map<String, Map<String, String>> ulicMap(List<SimcCsvRecord> simcAddress,

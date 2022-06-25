@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 @Log4j
 final class PostalCodeStripper extends PDFTextStripper {
 
+  public static final Pattern STREET_PATTERN = Pattern.compile(
+          "^(?![a-ząćęłńóśźż]+-)(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\"|[A-Z])$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
   private static final String POSTAL_CODE_PATTERN = "^\\d{2}-\\d{3}$";
   private static final float lastLineY = 0.0f;
   private static final float lastLineX = 0.0f;
@@ -126,13 +128,9 @@ final class PostalCodeStripper extends PDFTextStripper {
                         .getUnicode()
                         .equals("-");
 
-        var streetPattern =
-            Pattern.compile(
-                "^(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\")$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
-
         var cellString = cell.stream().map(TextPosition::getUnicode).collect(Collectors.joining());
 
-        var matcher = streetPattern.matcher(cellString);
+        var matcher = STREET_PATTERN.matcher(cellString);
         if (matcher.matches() && !previousCellEndsWithDash) {
           filtered = Optional.empty();
         } else {

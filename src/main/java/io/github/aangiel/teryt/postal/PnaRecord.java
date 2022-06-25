@@ -52,9 +52,17 @@ public class PnaRecord {
 
   public String getSimcPnaKey() {
     if (simcPnaKey == null) {
-      var newCommunity = "Kraków".equals(town) || ("Łódź".equals(town) && "łódzkie".equals(voivodeship)) ? townPart : community;
+      var newCommunity =
+          "Kraków".equals(town)
+                  || ("Łódź".equals(town) && "łódzkie".equals(voivodeship))
+                  || ("Poznań".equals(town) && "wielkopolskie".equals(voivodeship))
+                  || ("Warszawa".equals(town) && "mazowieckie".equals(voivodeship))
+                  || ("Wrocław".equals(town) && "dolnośląskie".equals(voivodeship))
+              ? townPart
+              : community;
       var newTown = town.endsWith("\"") ? town.substring(0, town.length() - 1) : town;
-      simcPnaKey = String.join(":", voivodeship, county, newCommunity, newTown).toLowerCase(Locale.ROOT);
+      simcPnaKey =
+          String.join(":", voivodeship, county, newCommunity, newTown).toLowerCase(Locale.ROOT);
     }
     return simcPnaKey;
   }
