@@ -22,8 +22,6 @@ final class PostalCodeStripper extends PDFTextStripper {
   public static final Pattern STREET_PATTERN = Pattern.compile(
           "^(?![a-ząćęłńóśźż]+-)(?:[A-ZĄĆĘŁŃÓŚŹŻ]|[a-ząćęłńóśźż]+\\.|\\d|^.*[A-ZĄĆĘŁŃÓŚŹŻ]+.*(?:[a-ząćęłńóśźż]+|\\s+|\"|[A-Z])$)+(?:\\s|-|[a-ząćęłńóśźż]*|[A-ZĄĆĘŁŃÓŚŹŻ]+|\\d*|\\.*|\"*|'*)+$");
   private static final String POSTAL_CODE_PATTERN = "^\\d{2}-\\d{3}$";
-  private static final float lastLineY = 0.0f;
-  private static final float lastLineX = 0.0f;
   private static float headerY = 0.0f;
   private static float footerY = 0.0f;
   private static int lineCounter = 0;
@@ -130,8 +128,8 @@ final class PostalCodeStripper extends PDFTextStripper {
 
         var cellString = cell.stream().map(TextPosition::getUnicode).collect(Collectors.joining());
 
-        var matcher = STREET_PATTERN.matcher(cellString);
-        if (matcher.matches() && !previousCellEndsWithDash) {
+        var matchesStreetPattern = streetMatch(cellString);
+        if (matchesStreetPattern && !previousCellEndsWithDash) {
           filtered = Optional.empty();
         } else {
           filtered = Optional.of(cellString);
@@ -202,6 +200,10 @@ final class PostalCodeStripper extends PDFTextStripper {
 
     var pnaRecord = PnaRecord.create(properties);
     result.add(pnaRecord);
+  }
+
+  static boolean streetMatch(String toMatch) {
+    return STREET_PATTERN.matcher(toMatch).matches();
   }
 
   private int getCellNumber(TextPosition textPosition) {
